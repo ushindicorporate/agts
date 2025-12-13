@@ -1,111 +1,132 @@
-import { Plus, Search, Filter } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search, Filter, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { getPropertiesAction } from "./actions/get-properties";
+import { Badge } from "@/components/ui/badge";
 
-export default function PropertiesManagement() {
+// Ceci est un Composant Serveur (Server Component) par défaut dans Next.js App Router
+// Il peut faire des appels async directement.
+export default async function PropertiesPage() {
+  
+  // 1. Récupération des données depuis Odoo
+  const { data: properties, success } = await getPropertiesAction();
+
   return (
     <div className="space-y-6">
-      {/* Header Page */}
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Gestion Immobilière</h1>
-        <button className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 shadow-sm">
-          <Plus className="h-4 w-4" />
-          Nouveau Mandat
-        </button>
+        <h1 className="text-2xl font-bold tracking-tight">Gestion Immobilière</h1>
+        <Button asChild className="bg-slate-900">
+          <Link href="/dashboard/properties/create">
+            <Plus className="mr-2 h-4 w-4" />
+            Nouvelle Offre
+          </Link>
+        </Button>
       </div>
 
-      {/* Barre d'outils (Filtres) */}
-      <div className="flex items-center justify-between rounded-lg border bg-white p-4 shadow-sm">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between rounded-lg border bg-card p-4 shadow-sm">
         <div className="relative w-96">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Rechercher par ref, adresse, propriétaire..." 
-            className="w-full rounded-md border border-gray-300 pl-10 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input 
+            placeholder="Rechercher (Kinshasa, Ref...)" 
+            className="pl-10" 
           />
         </div>
         <div className="flex gap-2">
-          <button className="flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-            <Filter className="h-4 w-4" />
+          <Button variant="outline" size="sm">
+            <Filter className="mr-2 h-4 w-4" />
             Filtres
-          </button>
+          </Button>
+          <Button variant="ghost" size="icon" title="Rafraîchir Odoo">
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Tableau de gestion (Data Table) */}
-      <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Bien</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Statut</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Prix</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Propriétaire</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Agent</th>
-              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {/* Row Mock 1 */}
-            <tr>
-              <td className="px-6 py-4">
-                <div className="flex items-center">
-                  <div className="h-10 w-10 flex-shrink-0 rounded bg-gray-200"></div>
-                  <div className="ml-4">
-                    <div className="font-medium text-gray-900">Villa Duplex 5P</div>
-                    <div className="text-sm text-gray-500">Ref: AG-2023-001</div>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
-                  Disponible
-                </span>
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-500">
-                450.000.000 FCFA
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-500">
-                SCI Les Palmiers
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-500">
-                Jean Dupont
-              </td>
-              <td className="px-6 py-4 text-right text-sm font-medium">
-                <a href="#" className="text-blue-600 hover:text-blue-900 mr-4">Éditer</a>
-                <a href="#" className="text-gray-600 hover:text-gray-900">Odoo</a>
-              </td>
-            </tr>
-            {/* Row Mock 2 */}
-            <tr>
-              <td className="px-6 py-4">
-                <div className="flex items-center">
-                  <div className="h-10 w-10 flex-shrink-0 rounded bg-gray-200"></div>
-                  <div className="ml-4">
-                    <div className="font-medium text-gray-900">Appartement T3 Plateau</div>
-                    <div className="text-sm text-gray-500">Ref: AG-2023-045</div>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <span className="inline-flex rounded-full bg-yellow-100 px-2 text-xs font-semibold leading-5 text-yellow-800">
-                  Sous offre
-                </span>
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-500">
-                1.200.000 FCFA/mois
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-500">
-                M. Kouassi
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-500">
-                Marie Koné
-              </td>
-              <td className="px-6 py-4 text-right text-sm font-medium">
-                <a href="#" className="text-blue-600 hover:text-blue-900 mr-4">Éditer</a>
-                <a href="#" className="text-gray-600 hover:text-gray-900">Odoo</a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      {/* Tableau Shadcn */}
+      <div className="rounded-md border bg-white">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[400px]"></TableHead>
+              <TableHead className="w-[400px]">Bien</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Prix ($)</TableHead>
+              <TableHead>Localisation</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {!success || !properties || properties.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  {success ? "Aucun bien trouvé sur Odoo." : "Erreur de connexion Odoo."}
+                </TableCell>
+              </TableRow>
+            ) : (
+              properties.map((property: any) => (
+                <TableRow key={property.id}>
+                  <TableCell>
+                    <div className="h-12 w-12 overflow-hidden rounded-md border bg-slate-100">
+                      <img 
+                        src={`${process.env.ODOO_URL}/web/image?model=product.template&id=${property.id}&field=image_128`}
+                        alt="Bien"
+                        className="h-full w-full object-cover"
+                        // Si l'image charge pas, on cache
+                        // onError={(e) => e.currentTarget.style.display = 'none'}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium text-slate-900">
+                      {property.name || "Sans titre"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="outline" className="capitalize">
+                      {property.x_property_type || "N/A"}
+                    </Badge>
+                    {property.x_transaction_type === 'rent' && (
+                       <Badge className="ml-2 bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">Loc</Badge>
+                    )}
+                  </TableCell>
+                  
+                  <TableCell className="font-semibold text-slate-700">
+                    {/* Formatage Dollars */}
+                    {new Intl.NumberFormat('en-US', { 
+                      style: 'currency', 
+                      currency: 'USD',
+                      maximumFractionDigits: 0 
+                    }).format(property.list_price || 0)}
+                  </TableCell>
+                  
+                  <TableCell>
+                    {property.x_studio_city || "Kinshasa"}
+                  </TableCell>
+                  
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" className="text-blue-600">
+                      Éditer
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

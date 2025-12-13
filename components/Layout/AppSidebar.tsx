@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils"; // Assurez-vous d'avoir cette fonction utilitaire de shadcn ou clsx
 import { 
   LayoutDashboard, 
@@ -13,6 +13,7 @@ import {
   Settings, 
   LogOut 
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const menuItems = [
   { href: "/dashboard", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -25,6 +26,14 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.refresh(); // Nettoie le cache
+    router.push("/"); // Retour login
+  };
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-slate-950 text-white">
@@ -64,7 +73,10 @@ export function Sidebar() {
           <Settings className="h-5 w-5" />
           Paramètres
         </Link>
-        <button className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-slate-900">
+        <button
+          className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-slate-900"
+          onClick={handleLogout}
+        >
           <LogOut className="h-5 w-5" />
           Déconnexion
         </button>

@@ -6,14 +6,13 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Save, Loader2, Upload } from "lucide-react";
 import Link from "next/link";
-import { ImageUploadPlaceholder } from "@/components/ImageUploadPlaceholder";
+import { toast } from "sonner"
 
 // Composants shadcn
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -36,6 +35,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useState } from "react";
+import { createPropertyAction } from "../actions/create-property";
+import { ImageUpload } from "@/components/image-upload";
 
 // Schéma de validation (Zod)
 const formSchema = z.object({
@@ -53,6 +54,7 @@ const formSchema = z.object({
   bedrooms: z.coerce.number().min(0),
   bathrooms: z.coerce.number().min(0),
   description: z.string().optional(),
+  image: z.string().optional(),
 });
 
 export default function CreatePropertyPage() {
@@ -74,19 +76,27 @@ export default function CreatePropertyPage() {
             address: "",
             city: "Kinshasa",
             description: "",
+            image: undefined,
         },
     });
 
   // 2. Gestion de la soumission
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    console.log("Envoi vers Odoo :", values);
-
-    // TODO: Appel API réel vers Odoo ici
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    
+    // Appel au serveur (Server Action)
+    const result = await createPropertyAction(values);
 
     setIsSubmitting(false);
-    router.push("/dashboard/properties");
+
+    if (result.success) {
+      // Succès
+      alert("Bien enregistré à Kinshasa ! ID Odoo: " + result.id); // Remplacer par toast
+      router.push("/dashboard/properties");
+    } else {
+      // Erreur
+      alert("Erreur lors de l'envoi : " + result.error);
+    }
   }
 
   return (
@@ -101,8 +111,7 @@ export default function CreatePropertyPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Nouveau Mandat</h1>
-            <p className="text-muted-foreground">Formulaire synchronisé Odoo</p>
+            <h1 className="text-2xl font-bold tracking-tight">Nouvelle Offre</h1>
           </div>
         </div>
       </div>
@@ -207,9 +216,23 @@ export default function CreatePropertyPage() {
                   
                   {/* Composant Custom (Pas shadcn natif) */}
                   <div className="space-y-2">
-                    <FormLabel>Photos du bien</FormLabel>
-                    <ImageUploadPlaceholder />
-                  </div>
+                    <FormField
+                        control={form.control}
+                        name="image"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Photo Principale</FormLabel>
+                            <FormControl>
+                            <ImageUpload 
+                                value={field.value} 
+                                onChange={field.onChange} 
+                            />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    </div>
                 </CardContent>
               </Card>
 

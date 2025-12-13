@@ -1,78 +1,45 @@
-// import xmlrpc from 'xmlrpc';
-// import { createClient } from '@/utils/supabase/server'; // Ton client Supabase Server
+// lib/odoo.ts
+import xmlrpc from "xmlrpc";
 
-// // Config Odoo (Variables d'environnement)
-// const ODOO_CONFIG = {
-//   url: process.env.ODOO_URL!,
-//   db: process.env.ODOO_DB!,
-//   username: process.env.ODOO_ADMIN_EMAIL!, // Un user système pour les appels API
-//   password: process.env.ODOO_ADMIN_PASSWORD!,
-// };
+const ODOO_URL = process.env.ODOO_URL || "https://votre-odoo.com";
+const ODOO_DB = process.env.ODOO_DB || "agts_db";
+const ODOO_USER = process.env.ODOO_EMAIL || "admin";
+const ODOO_PASSWORD = process.env.ODOO_PASSWORD || "admin";
 
-// // Fonction générique pour appeler Odoo
-// async function callOdoo(model: string, method: string, args: any[]) {
-//   const common = xmlrpc.createClient({ url: `${ODOO_CONFIG.url}/xmlrpc/2/common` });
-  
-//   // 1. Authentification système pour obtenir l'UID Admin
-//   const uid = await new Promise<number>((resolve, reject) => {
-//     common.methodCall('authenticate', [
-//       ODOO_CONFIG.db, 
-//       ODOO_CONFIG.username, 
-//       ODOO_CONFIG.password, 
-//       {}
-//     ], (err, val) => (err ? reject(err) : resolve(val)));
-//   });
+// Fonction helper pour créer un client et exécuter une méthode
+export async function odooCall(model: string, method: string, args: any[]) {
+  const urlParts = new URL(ODOO_URL);
+  const clientOptions = {
+    host: urlParts.hostname,
+    port: urlParts.port ? parseInt(urlParts.port) : 443,
+    path: "/xmlrpc/2/object",
+    headers: {
+      "User-Agent": "AGTS-NextJS-Client",
+    },
+  };
 
-//   // 2. Exécution de la requête
-//   const models = xmlrpc.createClient({ url: `${ODOO_CONFIG.url}/xmlrpc/2/object` });
-//   return new Promise((resolve, reject) => {
-//     models.methodCall('execute_kw', [
-//       ODOO_CONFIG.db, 
-//       uid, 
-//       ODOO_CONFIG.password, 
-//       model, 
-//       method, 
-//       args
-//     ], (err, val) => (err ? reject(err) : resolve(val)));
-//   });
-// }
+  // Création du client (Secure ou non selon l'URL)
+  const client = urlParts.protocol === "https:" 
+    ? xmlrpc.createSecureClient(clientOptions) 
+    : xmlrpc.createClient(clientOptions);
 
-// // LA FONCTION SÉCURISÉE EXPORTÉE
-// export async function fetchOdooData(model: string, domain: any[] = [], fields: string[] = []) {
-//   const supabase = createClient();
-  
-//   // 1. Vérification Auth Supabase
-//   const { data: { user }, error: authError } = await supabase.auth.getUser();
-//   if (authError || !user) throw new Error("Non autorisé");
+  return new Promise((resolve, reject) => {
+    // 1. Authentification pour récupérer l'UID (User ID)
+    const commonPath = "/xmlrpc/2/common";
+    const authOptions = { ...clientOptions, path: commonPath };
+    const authClient = urlParts.protocol === "https:" 
+      ? xmlrpc.createSecureClient(authOptions) 
+      : xmlrpc.createClient(authOptions);
 
-//   // 2. Vérification des Permissions (RBAC) via Supabase DB
-//   const { data: profile } = await supabase
-//     .from('profiles')
-//     .select('role, allowed_modules, odoo_partner_id')
-//     .eq('id', user.id)
-//     .single();
+    authClient.methodCall("authenticate", [ODOO_DB, ODOO_USER, ODOO_PASSWORD, {}], (err, uid) => {
+      if (err) return reject(err);
+      if (!uid) return reject(new Error("Échec authentification Odoo"));
 
-//   // Logique de sécurité métier
-//   // Ex: Si c'est un client, on force le filtre pour qu'il ne voie que SES données
-//   let finalDomain = domain;
-  
-//   if (profile?.role === 'client') {
-//     // Sécurité forcée : Un client ne voit que ce qui est lié à son ID partenaire Odoo
-//     if (model === 'account.move') { // Factures
-//        finalDomain = [...domain, ['partner_id', '=', profile.odoo_partner_id]];
-//     }
-//     // Interdiction d'accéder aux RH
-//     if (model === 'hr.employee') {
-//         throw new Error("Accès interdit aux données RH");
-//     }
-//   }
-
-//   // 3. Appel Odoo
-//   try {
-//     const data = await callOdoo(model, 'search_read', [finalDomain, { fields, limit: 100 }]);
-//     return data;
-//   } catch (error) {
-//     console.error("Erreur Odoo:", error);
-//     throw new Error("Erreur lors de la récupération des données");
-//   }
-// }
+      // 2. Exécution de la commande réelle avec l'UID
+      client.methodCall("execute_kw", [ODOO_DB, uid, ODOO_PASSWORD, model, method, args], (err, value) => {
+        if (err) return reject(err);
+        resolve(value);
+      });
+    });
+  });
+}
