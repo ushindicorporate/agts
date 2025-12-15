@@ -24,13 +24,12 @@ export default function LoginPage() {
       email,
       password,
     });
+    router.push("/dashboard");
 
     if (error) {
       setError(error.message); // Ex: "Invalid login credentials"
       setIsLoading(false);
     } else {
-      // 2. Succès -> Redirection
-      // Le Middleware (étape suivante) laissera passer car le cookie est mis
       router.refresh();
       router.push("/dashboard");
     }
