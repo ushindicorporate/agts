@@ -24,7 +24,6 @@ export default function LoginPage() {
       email,
       password,
     });
-    router.push("/dashboard");
 
     if (error) {
       setError(error.message); // Ex: "Invalid login credentials"
