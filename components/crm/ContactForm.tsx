@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { REContact } from '@/lib/types/real-estate';
+import { REContact } from '@/lib/types/contact';
 import { upsertContact } from '@/lib/actions/crm-actions';
 
 const numberField = z.coerce.number().min(0) as z.ZodNumber;

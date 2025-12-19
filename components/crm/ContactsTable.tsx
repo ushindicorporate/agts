@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { REContact } from '@/lib/types/real-estate';
+import { REContact } from '@/lib/types/contact';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 
 interface ContactsTableProps {

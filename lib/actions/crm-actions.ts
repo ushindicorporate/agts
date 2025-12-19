@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache';
-import { REContact } from '../types/real-estate';
+import { REContact } from '../types/contact';
 import { odooCall } from '../odoo-client';
 
 /**
@@ -225,6 +225,28 @@ export async function updateContactTags(partnerId: number, tagIds: number[]) {
     
     revalidatePath(`/contacts/${partnerId}`);
     return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createPropertyLead(propertyId: number, propertyName: string, contactId: number) {
+  try {
+    // 1. Récupérer le nom du contact pour le titre du lead
+    const contact = await odooCall('res.partner', 'read', [[contactId], ['name']]) as REContact[];
+    const contactName = contact[0]?.name || 'Inconnu';
+
+    const leadId = await odooCall('crm.lead', 'create', [{
+      name: `${propertyName} - ${contactName}`, // Titre: "Villa Mer - Jean Dupont"
+      partner_id: contactId,
+      // Si tu as un champ Many2one vers property dans crm.lead (recommandé), mets-le ici
+      // x_studio_property_id: propertyId, 
+      description: `Lead créé depuis l'application pour le bien #${propertyId}: ${propertyName}`,
+      type: 'opportunity',
+      priority: '2', // High
+    }]);
+
+    return { success: true, leadId };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

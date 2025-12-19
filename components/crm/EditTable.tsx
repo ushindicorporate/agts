@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import ContactForm from '@/components/crm/ContactForm';
-import { REContact } from '@/lib/types/real-estate'; // Vérifie tes imports
+import { REContact } from '@/lib/types/contact'; // Vérifie tes imports
 
 interface EditContactClientProps {
   contact: REContact;
