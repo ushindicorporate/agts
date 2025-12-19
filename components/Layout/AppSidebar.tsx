@@ -17,7 +17,8 @@ import { createClient } from "@/lib/supabase/client";
 
 const menuItems = [
   { href: "/dashboard", label: "Vue d'ensemble", icon: LayoutDashboard },
-  { href: "/dashboard/leads", label: "CRM & Leads", icon: Users },
+  { href: "/dashboard/contacts", label: "Contacts", icon: Users },
+  // { href: "/dashboard/leads", label: "CRM & Leads", icon: Users },
   { href: "/dashboard/properties", label: "Immobilier", icon: Building2 },
   { href: "/dashboard/vehicles", label: "Automobile", icon: CarFront },
   { href: "/dashboard/calendar", label: "Agenda", icon: CalendarDays },
