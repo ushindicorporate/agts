@@ -27,3 +27,5 @@ export const formatPrice = (amount: number, type: string) => {
   }).format(amount);
   return type === 'rent' ? `${formatted} / mois` : formatted;
 };
+
+export const formatCurrency = (val: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
