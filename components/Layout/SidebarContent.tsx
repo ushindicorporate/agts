@@ -7,12 +7,19 @@ import {
   Users, 
   Building2, 
   FileText, // Pour les offres plus tard
-  Settings 
+  Settings, 
+  TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const routes = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", color: "text-sky-500" },
+  { 
+    label: "Pipeline / Leads", // NOUVEAU MENU
+    icon: TrendingUp, 
+    href: "/dashboard/leads", 
+    color: "text-emerald-500" 
+  },
   { label: "Biens / Stock", icon: Building2, href: "/dashboard/properties", color: "text-violet-500" },
   { label: "Contacts CRM", icon: Users, href: "/dashboard/contacts", color: "text-pink-700" },
   { label: "Offres / Devis", icon: FileText, href: "/dashboard/offers", color: "text-orange-700" }, // Futur module
@@ -28,10 +35,10 @@ export function SidebarContent() {
           <div className="relative h-8 w-8 mr-4">
              {/* Logo ou Icône */}
              <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
-                IM
+                AG
              </div>
           </div>
-          <h1 className="text-xl font-bold">ImmoAgent</h1>
+          <h1 className="text-xl font-bold">AGTS</h1>
         </Link>
         <div className="space-y-1">
           {routes.map((route) => (
