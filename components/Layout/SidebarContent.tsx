@@ -8,7 +8,8 @@ import {
   Building2, 
   FileText, // Pour les offres plus tard
   Settings, 
-  TrendingUp
+  TrendingUp,
+  ListTodo
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +23,13 @@ const routes = [
   },
   { label: "Biens / Stock", icon: Building2, href: "/dashboard/properties", color: "text-violet-500" },
   { label: "Contacts CRM", icon: Users, href: "/dashboard/contacts", color: "text-pink-700" },
-  { label: "Offres / Devis", icon: FileText, href: "/dashboard/offers", color: "text-orange-700" }, // Futur module
+  { label: "Offres / Devis", icon: FileText, href: "/dashboard/offers", color: "text-orange-700" },
+  { 
+    label: "Mes Tâches", // NOUVEAU MENU
+    icon: ListTodo, 
+    href: "/dashboard/tasks", 
+    color: "text-amber-600" 
+  },
 ];
 
 export function SidebarContent() {

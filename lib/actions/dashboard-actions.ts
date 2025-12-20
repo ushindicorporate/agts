@@ -3,80 +3,87 @@ import { odooCall } from '../odoo-client';
 
 export async function getDashboardStats() {
   try {
-    // 1. Définition des Domaines (Filtres)
+    // Domaines
     const domainProperties = [['x_studio_produit_immobilier', '=', true]];
-    const domainAvailable = [['x_studio_produit_immobilier', '=', true], ['x_studio_statut', '=', 'available']];
-    const domainLeads = [['type', '=', 'opportunity']]; // Si tu utilises le module CRM standard
+    const domainOffers = []; // Toutes les offres
+    // Pour les tâches, Odoo filtre souvent par défaut sur l'user, sinon on récupère tout
+    const domainTasks = []; 
 
-    // 2. Exécution PARALLÈLE (Performance +++)
+    // Exécution PARALLÈLE (7 requêtes en même temps)
     const [
-      totalProperties,
-      availableProperties,
-      totalContacts,
-      recentLeads,
-      recentProperties
+      countProperties,
+      countContacts,
+      countLeads,
+      countOffers,
+      countTasks,
+      recentOffers,
+      urgentTasks
     ] = await Promise.all([
-      // A. Compte total des biens
+      // 1. Compteurs
       odooCall('product.template', 'search_count', [domainProperties]),
-      
-      // B. Compte des biens disponibles (pour calculer le ratio)
-      odooCall('product.template', 'search_count', [domainAvailable]),
-      
-      // C. Compte des contacts
       odooCall('res.partner', 'search_count', [[]]),
+      odooCall('crm.lead', 'search_count', [[['type', '=', 'opportunity']]]),
+      odooCall('sale.order', 'search_count', [[]]),
+      odooCall('mail.activity', 'search_count', [[]]),
 
-      // D. Les 5 derniers Leads / Opportunités
-      odooCall('crm.lead', 'search_read', [
-        [], // Tous les leads
-        ['id', 'name', 'partner_id', 'create_date', 'expected_revenue'], 
-        0, 
-        5, 
-        'create_date desc'
-      ]),
-
-      // E. Les 5 derniers Biens ajoutés
-      odooCall('product.template', 'search_read', [
-        domainProperties,
-        ['id', 'name', 'list_price', 'x_studio_type', 'x_studio_city', 'image_128'],
+      // 2. Dernières Offres (Limit 5)
+      odooCall('sale.order', 'search_read', [
+        [],
+        ['id', 'name', 'partner_id', 'amount_total', 'state', 'date_order'],
         0,
         5,
-        'create_date desc'
+        'date_order desc'
+      ]),
+
+      // 3. Tâches Urgentes (Limit 5, triées par deadline)
+      odooCall('mail.activity', 'search_read', [
+        [],
+        ['id', 'summary', 'date_deadline', 'res_name', 'activity_type_id'],
+        0,
+        5,
+        'date_deadline asc'
       ])
     ]);
 
-    // 3. Calcul de la valeur totale du portefeuille (Approximation via les 5 derniers ou une autre méthode si besoin)
-    // Note: Faire une somme sur tout la base via XML-RPC est lourd, on va simuler ou rester sur des compteurs pour l'instant.
+    // Calcul du montant total des 5 dernières offres (Juste pour l'exemple KPI rapide)
+    const recentVolume = (recentOffers as any[]).reduce((acc, curr) => acc + (curr.amount_total || 0), 0);
 
     return {
       counts: {
-        properties: Number(totalProperties),
-        available: Number(availableProperties),
-        contacts: Number(totalContacts),
-        leads: (recentLeads as any[]).length // Ou search_count si tu veux le vrai total
+        properties: Number(countProperties),
+        contacts: Number(countContacts),
+        leads: Number(countLeads),
+        offers: Number(countOffers),
+        tasks: Number(countTasks)
       },
-      recentLeads: (recentLeads as any[]).map((l: any) => ({
-        id: l.id,
-        name: l.name,
-        contact: l.partner_id ? l.partner_id[1] : 'Inconnu',
-        date: l.create_date,
-        revenue: l.expected_revenue || 0
+      financials: {
+        recentVolume
+      },
+      recentOffers: (recentOffers as any[]).map((o: any) => ({
+        id: o.id,
+        name: o.name,
+        client: o.partner_id ? o.partner_id[1] : 'Inconnu',
+        amount: o.amount_total,
+        state: o.state,
+        date: o.date_order
       })),
-      recentProperties: (recentProperties as any[]).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        price: p.list_price,
-        city: p.x_studio_city || '',
-        type: p.x_studio_type || '',
-        image: p.image_128
+      urgentTasks: (urgentTasks as any[]).map((t: any) => ({
+        id: t.id,
+        summary: t.summary || 'Sans titre',
+        deadline: t.date_deadline,
+        target: t.res_name,
+        type: t.activity_type_id ? t.activity_type_id[1] : 'Tâche'
       }))
     };
 
   } catch (error) {
     console.error("Dashboard Error:", error);
+    // Retour de secours pour ne pas planter l'UI
     return {
-      counts: { properties: 0, available: 0, contacts: 0, leads: 0 },
-      recentLeads: [],
-      recentProperties: []
+      counts: { properties: 0, contacts: 0, leads: 0, offers: 0, tasks: 0 },
+      financials: { recentVolume: 0 },
+      recentOffers: [],
+      urgentTasks: []
     };
   }
 }

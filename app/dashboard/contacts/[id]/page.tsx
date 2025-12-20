@@ -14,7 +14,7 @@ import {
 
 // Composants UI
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -22,37 +22,25 @@ import { Separator } from '@/components/ui/separator';
 // Composants Custom
 import ActivityTimeline from '@/components/crm/ActivityTimeline';
 import { TagsManager } from '@/components/crm/TagsManager';
+import QuickTaskDialog from '@/components/tasks/QuickTaskDialog'; // <--- IMPORT AJOUTÉ
 import { getAllTags, getContactById, getContactHistory } from '@/lib/actions/crm-actions';
-import { format } from 'date-fns';
-
-// --- Utilitaires d'affichage ---
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
-};
-
-const formatDate = (dateString?: string) => {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-};
+import { formatCurrency } from '@/lib/utils';
 
 // --- Page Component ---
 
 export default async function ContactDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  // 1. Récupération de l'ID depuis les params (Next.js 15)
   const { id } = await params;
   const contactId = parseInt(id);
 
   if (isNaN(contactId)) return notFound();
 
-  // 2. Chargement PARALLÈLE des données (Performance Optimale)
+  // Chargement PARALLÈLE des données
   const [contact, history, allTags] = await Promise.all([
     getContactById(contactId),
     getContactHistory(contactId),
     getAllTags()
   ]);
 
-  // 3. Gestion 404
   if (!contact) return notFound();
 
   // Initials pour l'avatar
@@ -66,8 +54,9 @@ export default async function ContactDetailsPage({ params }: { params: Promise<{
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 space-y-6">
       
-      {/* --- HEADER NAVIGATION --- */}
+      {/* --- HEADER NAVIGATION & ACTIONS --- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Gauche : Retour */}
         <div className="flex items-center gap-2">
           <Link href="/dashboard/contacts">
             <Button variant="ghost" size="sm" className="pl-0 hover:bg-transparent hover:text-primary">
@@ -75,11 +64,23 @@ export default async function ContactDetailsPage({ params }: { params: Promise<{
             </Button>
           </Link>
         </div>
-        <Link href={`/dashboard/contacts/${contactId}/edit`}>
-          <Button>
-            <Edit className="mr-2 h-4 w-4" /> Modifier Fiche
-          </Button>
-        </Link>
+
+        {/* Droite : Actions (Rappel + Modifier) */}
+        <div className="flex items-center gap-2">
+            
+            {/* --- AJOUT DU BOUTON TÂCHE RAPIDE --- */}
+            <QuickTaskDialog 
+                resModel="res.partner" 
+                resId={contactId} 
+            />
+            {/* ------------------------------------ */}
+
+            <Link href={`/dashboard/contacts/${contactId}/edit`}>
+                <Button>
+                    <Edit className="mr-2 h-4 w-4" /> Modifier Fiche
+                </Button>
+            </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -111,7 +112,7 @@ export default async function ContactDetailsPage({ params }: { params: Promise<{
                     <TagsManager 
                         partnerId={contact.id!} 
                         allTags={allTags} 
-                        currentTagIds={contact.tags?.map(t => t[0]) || []} 
+                        currentTagIds={contact.tags ? contact.tags.map(t => t[0]) : []} 
                     />
                 </div>
               </div>
@@ -159,7 +160,7 @@ export default async function ContactDetailsPage({ params }: { params: Promise<{
                     </div>
                   <div>
                     <p className="text-xs text-muted-foreground font-medium uppercase">Date création</p>
-                    <p className="text-sm text-muted-foreground">{contact.createdAt ? format(new Date(contact.createdAt), 'dd/MM/yyyy') : 'Non renseignée'}</p>
+                    <p className="text-sm text-muted-foreground">Synchronisé Odoo</p>
                   </div>
                 </div>
               </div>
@@ -208,7 +209,7 @@ export default async function ContactDetailsPage({ params }: { params: Promise<{
             </CardContent>
           </Card>
 
-          {/* 3. Carte Notes Internes (Lecture seule ici) */}
+          {/* 3. Carte Notes Internes (Lecture seule) */}
           {contact.notes && (
             <Card>
                 <CardHeader className="pb-2">
