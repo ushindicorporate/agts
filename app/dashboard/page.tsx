@@ -8,9 +8,10 @@ import {
   ArrowRight,
   ArrowUpRight,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Trophy
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDashboardStats } from "@/lib/actions/dashboard-actions";
@@ -108,7 +109,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* 2. SECTION LISTES (2 Colonnes) */}
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         
         {/* COLONNE GAUCHE : TÂCHES URGENTES (Priorité Action) */}
         <Card className="flex flex-col h-full">
@@ -211,6 +212,57 @@ export default async function DashboardPage() {
             </CardContent>
         </Card>
 
+        {/* COLONNE 3 : TOP AGENTS (Nouveau) */}
+        <Card className="flex flex-col h-full">
+            <CardHeader className="flex flex-row items-center justify-between bg-muted/20 border-b py-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-yellow-600" />
+                    Meilleurs Agents
+                </CardTitle>
+                <Link href="/dashboard/agents" className="text-sm text-primary hover:underline flex items-center">
+                    Détails <ArrowRight className="ml-1 h-3 w-3" />
+                </Link>
+            </CardHeader>
+            <CardContent className="p-0 flex-1">
+                {stats.topAgents.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground text-sm">
+                        Aucune donnée de performance disponible.
+                    </div>
+                ) : (
+                    <div className="divide-y">
+                        {stats.topAgents.map((agent: any, index: number) => (
+                            <div key={agent.id} className="flex items-center gap-4 p-4 hover:bg-muted/50 transition">
+                                <div className="relative">
+                                    <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                                        <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold">
+                                            {agent.name.substring(0, 2)}
+                                        </AvatarFallback>
+                                        <AvatarImage src={agent.image} />
+                                    </Avatar>
+                                    {/* Badge de rang */}
+                                    <div className={`absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${
+                                        index === 0 ? "bg-yellow-500" : index === 1 ? "bg-gray-400" : "bg-orange-400"
+                                    }`}>
+                                        {index + 1}
+                                    </div>
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm text-foreground truncate">{agent.name}</p>
+                                    <p className="text-xs text-muted-foreground">{agent.deals} ventes</p>
+                                </div>
+
+                                <div className="text-right">
+                                    <span className="text-sm font-bold text-foreground">
+                                        {formatCurrency(agent.revenue)}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
       </div>
     </div>
   );

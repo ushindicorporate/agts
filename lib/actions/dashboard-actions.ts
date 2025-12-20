@@ -1,5 +1,6 @@
 'use server'
 import { odooCall } from '../odoo-client';
+import { getAgentsAnalytics } from './agent-actions';
 
 export async function getDashboardStats() {
   try {
@@ -44,6 +45,15 @@ export async function getDashboardStats() {
         'date_deadline asc'
       ])
     ]);
+    const allAgents = await getAgentsAnalytics();
+    // On ne garde que le top 3 pour le widget
+    const topAgents = allAgents.slice(0, 3).map(a => ({
+        id: a.id,
+        name: a.name,
+        image: a.image,
+        revenue: a.totalRevenue,
+        deals: a.dealsClosed
+    }));
 
     // Calcul du montant total des 5 dernières offres (Juste pour l'exemple KPI rapide)
     const recentVolume = (recentOffers as any[]).reduce((acc, curr) => acc + (curr.amount_total || 0), 0);
@@ -73,7 +83,8 @@ export async function getDashboardStats() {
         deadline: t.date_deadline,
         target: t.res_name,
         type: t.activity_type_id ? t.activity_type_id[1] : 'Tâche'
-      }))
+      })),
+      topAgents
     };
 
   } catch (error) {
@@ -83,7 +94,8 @@ export async function getDashboardStats() {
       counts: { properties: 0, contacts: 0, leads: 0, offers: 0, tasks: 0 },
       financials: { recentVolume: 0 },
       recentOffers: [],
-      urgentTasks: []
+      urgentTasks: [],
+      topAgents: []
     };
   }
 }

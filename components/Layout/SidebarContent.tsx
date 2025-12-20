@@ -9,7 +9,8 @@ import {
   FileText, // Pour les offres plus tard
   Settings, 
   TrendingUp,
-  ListTodo
+  ListTodo,
+  Trophy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,10 +26,16 @@ const routes = [
   { label: "Contacts CRM", icon: Users, href: "/dashboard/contacts", color: "text-pink-700" },
   { label: "Offres / Devis", icon: FileText, href: "/dashboard/offers", color: "text-orange-700" },
   { 
+    label: "Performance / Agents", 
+    icon: Trophy, 
+    href: "/dashboard/agents", 
+    color: "text-yellow-600" 
+  },
+  { 
     label: "Mes Tâches", // NOUVEAU MENU
     icon: ListTodo, 
     href: "/dashboard/tasks", 
-    color: "text-amber-600" 
+    color: "text-amber-600",
   },
 ];
 
