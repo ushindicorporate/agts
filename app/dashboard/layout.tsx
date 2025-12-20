@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/Layout/AppSidebar";
 import { UserNav } from "@/components/Layout/UserNav"; // Import du nouveau composant
 import { createClient } from "@/lib/supabase/server";
+import { SidebarContent } from "@/components/Layout/SidebarContent";
+import { MobileNav } from "@/components/Layout/MobileNav";
 
 export default async function DashboardLayout({
   children,
@@ -38,8 +40,8 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar Fixe */}
-      <aside className="hidden md:block h-full border-r bg-white">
-        <Sidebar />
+      <aside className="hidden md:block w-72 h-full border-r bg-white inset-y-0 z-80">
+        <SidebarContent />
       </aside>
 
       {/* Zone Principale */}
@@ -47,7 +49,10 @@ export default async function DashboardLayout({
         
         {/* Header Interne */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b bg-white px-8 shadow-sm z-10">
-          <h2 className="text-lg font-semibold text-gray-800">Espace Agent</h2>
+          <div className="flex items-center gap-2">
+            <MobileNav /> {/* Visible uniquement sur mobile via CSS du composant */}
+            <h2 className="text-lg font-semibold text-gray-800 hidden sm:block">Espace Agent</h2>
+          </div>
           
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
