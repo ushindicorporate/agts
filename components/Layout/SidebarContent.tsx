@@ -10,7 +10,8 @@ import {
   Settings, 
   TrendingUp,
   ListTodo,
-  Trophy
+  Trophy,
+  Banknote
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,12 @@ const routes = [
     icon: Trophy, 
     href: "/dashboard/agents", 
     color: "text-yellow-600" 
+  },
+  { 
+    label: "Finances & Com.", 
+    icon: Banknote, 
+    href: "/dashboard/finance", 
+    color: "text-green-600" 
   },
   { 
     label: "Mes Tâches", // NOUVEAU MENU
