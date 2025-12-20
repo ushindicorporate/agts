@@ -1,7 +1,7 @@
 // types/property.ts
 
 export type PropertyType = 'apartment' | 'villa' | 'land' | 'commercial';
-export type OfferType = 'sale' | 'rent';
+export type OfferType = 'À vendre' | 'À louer';
 export type PropertyStatus = 'available' | 'reserved' | 'rented' | 'sold';
 
 export interface Property {

@@ -10,7 +10,8 @@ import {
   Home,
   Wallet,
   CheckCircle2,
-  User
+  User,
+  FolderOpen
 } from 'lucide-react';
 
 // UI Components
@@ -22,6 +23,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getPropertyById } from '@/lib/actions/property-actions';
 import { getGalleryImages } from '@/lib/actions/image-actions';
 import { formatPrice } from '@/lib/utils';
+import DocumentsList from '@/components/documents/DocumentsList';
+import UploadButton from '@/components/documents/UploadButton';
+import { getDocuments } from '@/lib/actions/document-actions';
 
 // Utilitaire pour les couleurs de statut
 const getStatusBadge = (status: string) => {
@@ -65,6 +69,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
   
   // Placeholder si aucune image
   const mainImageSrc = allImages.length > 0 ? allImages[0].src : '/placeholder-house.jpg';
+  const documents = await getDocuments('product.template', propertyId);
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 space-y-8">
@@ -105,7 +110,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 {formatPrice(property.price, property.offerType)}
             </p>
             <p className="text-sm text-muted-foreground font-medium">
-                {property.offerType === 'sale' ? 'Honoraires inclus' : 'Charges comprises'}
+                {property.offerType === 'À vendre' ? 'Honoraires inclus' : 'Charges comprises'}
             </p>
         </div>
       </div>
@@ -278,6 +283,19 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                     </CardContent>
                 </Card>
             )}
+
+            <Card className="mt-8">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <FolderOpen className="h-5 w-5 text-blue-600" />
+                        <CardTitle>Documents associés</CardTitle>
+                    </div>
+                    <UploadButton resModel="product.template" resId={propertyId} />
+                </CardHeader>
+                <CardContent>
+                    <DocumentsList documents={documents} />
+                </CardContent>
+            </Card>
 
             {/* Quick Actions */}
             <Card>

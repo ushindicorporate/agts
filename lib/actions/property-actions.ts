@@ -153,13 +153,13 @@ export async function upsertProperty(data: Property) {
       name: data.name,
       list_price: data.price,
       // Custom Fields
-      x_re_type: data.type,
-      x_re_address: data.address,
-      x_re_city: data.city,
-      x_re_offer_type: data.offerType,
-      x_re_commission: data.commission,
-      x_re_status: data.status,
-      x_re_owner_id: data.ownerId || false, // false pour null dans Odoo
+      x_studio_type: data.type,
+      x_studio_localisation_adresse_quartier: data.address,
+      x_studio_city: data.city,
+      // x_studio_offer_type: data.offerType,
+      x_studio_commission: data.commission,
+      x_studio_statut: data.offerType,
+      x_studio_owner: data.ownerId || false, // false pour null dans Odoo
       
       // Flags standards
       sale_ok: true, // On considère que c'est un produit vendable

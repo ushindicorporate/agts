@@ -11,7 +11,9 @@ import {
   TrendingUp,
   ListTodo,
   Trophy,
-  Banknote
+  Banknote,
+  FolderOpen,
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +45,18 @@ const routes = [
     icon: ListTodo, 
     href: "/dashboard/tasks", 
     color: "text-amber-600",
+  },
+  { 
+    label: "Documents", // NOUVEAU MENU
+    icon: FolderOpen, 
+    href: "/dashboard/documents", 
+    color: "text-slate-600" 
+  },
+  { 
+    label: "Rapports", 
+    icon: BarChart3, 
+    href: "/dashboard/reporting", 
+    color: "text-gray-700" 
   },
 ];
 

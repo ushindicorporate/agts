@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, Save, AlertCircle, ImageIcon } from 'lucide-react';
+import { Loader2, Save, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import ImageManager from './ImageManager'; // Assure-toi que ce fichier est dans le même dossier
@@ -16,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Property } from '@/lib/types/property';
+import { upsertProperty } from '@/lib/actions/property-actions';
 
 // --- SCHÉMA DE VALIDATION ---
 const formSchema = z.object({
@@ -24,7 +25,7 @@ const formSchema = z.object({
   type: z.enum(['apartment', 'villa', 'land', 'commercial']),
   address: z.string().min(5, "Adresse requise"),
   city: z.string().min(2, "Ville requise"),
-  offerType: z.enum(['sale', 'rent']),
+  offerType: z.enum(['À vendre', 'À louer']),
   // z.coerce permet de gérer les inputs type="number" qui renvoient des strings
   price: z.coerce.number().min(0, "Prix positif requis"),
   commission: z.coerce.number().min(0),
@@ -53,7 +54,7 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
       type: 'apartment',
       address: '',
       city: '',
-      offerType: 'sale',
+      offerType: 'À vendre',
       price: 0,
       commission: 0,
       status: 'available',
@@ -71,7 +72,7 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
 
     if (result.success) {
       toast.success(propertyId ? "Modifications enregistrées" : "Bien immobilier créé", {
-        description: "Synchronisé avec Odoo."
+        // description: "Synchronisé avec Odoo."
       });
       
       if (!initialData) form.reset();
@@ -140,8 +141,8 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                                 <SelectContent>
                                     <SelectItem value="available">Disponible</SelectItem>
                                     <SelectItem value="reserved">Réservé</SelectItem>
-                                    <SelectItem value="sold">Vendu</SelectItem>
-                                    <SelectItem value="rented">Loué</SelectItem>
+                                    <SelectItem value="À vendre">Vendu</SelectItem>
+                                    <SelectItem value="À louer">Loué</SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormItem>
@@ -218,8 +219,8 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                 <SelectContent>
-                                    <SelectItem value="sale">Vente</SelectItem>
-                                    <SelectItem value="rent">Location</SelectItem>
+                                    <SelectItem value="À vendre">Vente</SelectItem>
+                                    <SelectItem value="À louer">Location</SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormItem>

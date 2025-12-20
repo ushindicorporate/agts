@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { formatPrice } from '@/lib/utils';
 
 // --- HELPERS VISUELS ---
 
@@ -30,13 +31,6 @@ const getStatusBadge = (status: string) => {
       return <span className={`${base} bg-muted text-muted-foreground border-border`}>{status}</span>;
   }
 };
-
-const formatPrice = (price: number, type: string) =>
-  new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR', // ou USD
-    maximumFractionDigits: 0,
-  }).format(price) + (type === 'rent' ? '/mois' : '');
 
 // --- PAGE COMPONENT ---
 
