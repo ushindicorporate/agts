@@ -71,7 +71,12 @@ export async function getContactById(id: number): Promise<REContact | null> {
   try {
     const result = await odooCall('res.partner', 'search_read', [
       [['id', '=', id]], // Domain
-      ['id', 'name', 'email', 'phone', 'comment', 'x_studio_role', 'x_studio_budget_min', 'x_studio_budget_max', 'x_studio_localisation_prfre', 'x_studio_source', 'category_id', 'create_date'] // Fields
+      [
+        'id',
+        'name', 'email', 'phone', 'comment', 'x_studio_role', 'x_studio_budget_min',
+        'x_studio_budget_max', 'x_studio_localisation_prfre', 'x_studio_source',
+        'category_id', 'create_date', 'x_studio_type'
+      ] // Fields
     ]) as any[];
     
     if (!result || result.length === 0) return null;
@@ -89,6 +94,7 @@ export async function getContactById(id: number): Promise<REContact | null> {
       budgetMax: c.x_studio_budget_max || 0,
       preferredLocation: c.x_studio_localisation_prfre || '',
       source: c.x_studio_source || 'website',
+      x_studio_type: c.x_studio_type || 'private',
       tags: c.category_id || [],
       createdAt: c.create_date || '',
     };
@@ -123,7 +129,7 @@ export async function getContacts(
     // 2. Récupérer les données
     const records = await odooCall('res.partner', 'search_read', [
       domain,
-      ['id', 'name', 'email', 'phone', 'x_studio_role', 'create_date', 'x_studio_source'], // Fields
+      ['id', 'name', 'email', 'phone', 'x_studio_role', 'create_date', 'x_studio_source', 'x_studio_type'], // Fields
       offset, // Offset
       pageSize, // Limit
       'create_date desc' // Order
@@ -137,7 +143,9 @@ export async function getContacts(
       phone: c.phone || '-',
       role: c.x_studio_role || 'N/A',
       source: c.x_studio_source,
-      budgetMin: 0, budgetMax: 0, preferredLocation: '' // Champs non affichés dans la liste
+      budgetMin: 0, budgetMax: 0, preferredLocation: '', // Champs non affichés dans la liste
+      x_studio_type: c.x_studio_type || 'private',
+      createdAt: c.create_date || '',
     }));
 
     return { contacts, totalCount, totalPages: Math.ceil(totalCount / pageSize) };
@@ -288,5 +296,46 @@ export async function getActivityHistory(resModel: string, resId: number) {
     }));
   } catch (error) {
     return [];
+  }
+}
+
+export async function getContactCounts() {
+  try {
+    // On utilise read_group pour compter par rôle
+    const groups = await odooCall('res.partner', 'read_group', [
+        [['customer_rank', '>', 0]], // Filtre global (Clients)
+        ['x_studio_type'], // Champ à compter
+        ['x_studio_type']  // Group By
+    ]) as any[];
+
+    // Initialisation avec des zéros
+    const counts = {
+        internal_agent: 0,
+        internal_agency: 0,
+        external_agent: 0,
+        external_agency: 0,
+        promoter: 0,
+        private: 0, // Fallback ou rôle 'buyer'/'tenant'
+        all: 0
+    };
+
+    let total = 0;
+    groups.forEach((g: any) => {
+        const role = g.x_studio_type; // ex: 'internal_agent'
+        const count = g.x_studio_type;
+        if (role && counts.hasOwnProperty(role)) {
+            // @ts-ignore
+            counts[role] = count;
+        } else if (role === 'buyer' || role === 'tenant') {
+             // On peut grouper acheteurs/locataires sous "Clients"
+             counts.private += count;
+        }
+        total += count;
+    });
+    counts.all = total;
+
+    return counts;
+  } catch (error) {
+    return { internal_agent: 0, internal_agency: 0, external_agent: 0, external_agency: 0, promoter: 0, private: 0, all: 0 };
   }
 }
