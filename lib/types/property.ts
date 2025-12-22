@@ -29,4 +29,11 @@ export interface Property {
   
   // Tech (pour l'image plus tard)
   mainImage?: string; 
+
+  // Autres caractéristiques
+  salons?: number;    // Nombre de salons
+  kitchens?: number;  // Nombre de cuisines
+  bathrooms?: number; // Nombre de salles de bain
+  parking?: boolean;  // Parking disponible
+  description?: string; // Description détaillée
 }

@@ -139,6 +139,10 @@ export async function getPropertyById(id: number): Promise<Property | null> {
             ownerName: p.x_re_owner_id ? p.x_re_owner_id[1] : undefined,
             surface: p.x_studio_surface_m || 0,
             bedrooms: p.x_studio_nb_chambres || 0,
+            salons: p.x_studio_nb_salons || 0,
+            kitchens: p.x_studio_nb_cuisines || 0,
+            bathrooms: p.x_studio_nb_salle_de_bain || 0,
+            parking: p.x_studio_parking || false,
         };
     } catch (error) {
         return null;
@@ -160,6 +164,14 @@ export async function upsertProperty(data: Property) {
       x_studio_commission: data.commission,
       x_studio_statut: data.offerType,
       x_studio_owner: data.ownerId || false, // false pour null dans Odoo
+      x_studio_surface_m: data.surface,
+      x_studio_nb_chambres: data.bedrooms,
+      x_studio_nb_salons: data.salons,
+      x_studio_nb_cuisines: data.kitchens,
+      x_studio_nb_salle_de_bain: data.bathrooms,
+      x_studio_parking: data.parking,
+      x_studio_description: data.description,
+      x_studio_produit_immobilier: true, // Marque comme bien immobilier
       
       // Flags standards
       sale_ok: true, // On considère que c'est un produit vendable

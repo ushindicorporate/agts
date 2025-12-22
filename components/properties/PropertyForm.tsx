@@ -32,6 +32,12 @@ const formSchema = z.object({
   commission: z.coerce.number().min(0),
   status: z.enum(['available', 'reserved', 'rented', 'sold']),
   ownerId: z.coerce.number().optional(),
+  salons: z.coerce.number().min(0).optional(),
+  surface: z.coerce.number().min(0, "Surface positive requise"),
+  bedrooms: z.coerce.number().min(0).optional(),
+  kitchens: z.coerce.number().min(0).optional(),
+  bathrooms: z.coerce.number().min(0).optional(),
+  description: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -60,6 +66,7 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
       price: 0,
       commission: 0,
       status: 'available',
+      salons: 0,
     }
   });
 
@@ -166,6 +173,22 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                 <CardContent className="grid gap-4 md:grid-cols-2">
                     <FormField
                         control={form.control}
+                        name="surface"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Superficie</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <Input type="number" className="pl-8" {...field} />
+                                    <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">m²</span>
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
                         name="address"
                         render={({ field }) => (
                         <FormItem>
@@ -252,7 +275,7 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                             <FormControl>
                                 <div className="relative">
                                     <Input type="number" className="pl-8" {...field} />
-                                    <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">€</span>
+                                    <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
                                 </div>
                             </FormControl>
                             <FormMessage />
@@ -268,7 +291,79 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                             <FormControl>
                                 <div className="relative">
                                     <Input type="number" className="pl-8" {...field} />
-                                    <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">€</span>
+                                    <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">$</span>
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </CardContent>
+            </Card>
+
+            {/* CARTE 4: Details du Bien */}
+            <Card>
+                <CardHeader><CardTitle>Details du Bien</CardTitle></CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-4">
+                    
+                    <FormField
+                        control={form.control}
+                        name="salons"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nb. Salons</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <Input type="number" className="pl-8" {...field} />
+                                    {/* <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">€</span> */}
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="bedrooms"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nb. Chambres</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <Input type="number" className="pl-8" {...field} />
+                                    {/* <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">€</span> */}
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="kitchens"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nb. Cuisines</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <Input type="number" className="pl-8" {...field} />
+                                    {/* <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">€</span> */}
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="bathrooms"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nb. Salle de bains</FormLabel>
+                            <FormControl>
+                                <div className="relative">
+                                    <Input type="number" className="pl-8" {...field} />
+                                    {/* <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">€</span> */}
                                 </div>
                             </FormControl>
                             <FormMessage />
