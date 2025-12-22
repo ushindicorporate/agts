@@ -30,6 +30,7 @@ const formSchema = z.object({
   preferredLocation: z.string().optional(),
   source: z.enum(['whatsapp', 'website', 'instagram', 'referral', 'other']),
   notes: z.string().optional(),
+  type: z.enum(['internal_agent', 'internal_agency', 'external_agent', 'external_agency', 'promoter', 'private']).optional(),
 });
 
 // On extrait le type automatiquement du schéma
@@ -54,9 +55,12 @@ export default function ContactForm({ initialData, onSuccess }: ContactFormProps
       budgetMax: 0,
       preferredLocation: '',
       source: 'website',
-      notes: ''
+      notes: '',
+      type: 'private',
     }
   });
+
+  const selectedType = form.watch("type");
 
   async function onSubmit(values: ContactFormValues) {
     setIsSubmitting(true);
@@ -150,6 +154,31 @@ export default function ContactForm({ initialData, onSuccess }: ContactFormProps
                     <FormControl>
                       <Input placeholder="+33 6 00 00 00 00" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-primary font-semibold">Type de Partenaire</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner le type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="private">Private</SelectItem>
+                        <SelectItem value="internal_agent">Agent Interne</SelectItem>
+                        <SelectItem value="internal_agency">Agence Interne</SelectItem>
+                        <SelectItem value="external_agent">Agent Externe</SelectItem>
+                        <SelectItem value="external_agency">Agence Externe</SelectItem>
+                        <SelectItem value="promoter">Promoteur Immobilier</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

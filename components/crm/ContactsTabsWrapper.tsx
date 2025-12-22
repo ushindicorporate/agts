@@ -53,8 +53,8 @@ export default function ContactsTabsWrapper({ contacts, pageCount, currentPage, 
             <TabsTrigger value="promoter" className="py-2">
                 Promoteurs <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.promoter}</span>
             </TabsTrigger>
-            <TabsTrigger value="client" className="py-2">
-                Clients <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.client}</span>
+            <TabsTrigger value="private" className="py-2">
+                Clients <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.private}</span>
             </TabsTrigger>
         </TabsList>
       </Tabs>

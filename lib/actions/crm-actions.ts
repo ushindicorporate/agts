@@ -21,6 +21,7 @@ export async function upsertContact(data: REContact) {
       x_studio_budget_max: data.budgetMax,
       x_studio_localisation_prfre: data.preferredLocation,
       x_studio_source: data.source,
+      x_studio_type: data.type || 'private',
       
       // On force le statut client pour être propre dans Odoo
       customer_rank: 1, 
@@ -94,7 +95,7 @@ export async function getContactById(id: number): Promise<REContact | null> {
       budgetMax: c.x_studio_budget_max || 0,
       preferredLocation: c.x_studio_localisation_prfre || '',
       source: c.x_studio_source || 'website',
-      x_studio_type: c.x_studio_type || 'private',
+      type: c.x_studio_type || 'private',
       tags: c.category_id || [],
       createdAt: c.create_date || '',
     };
@@ -108,7 +109,8 @@ export async function getContacts(
   page: number = 1, 
   pageSize: number = 10, 
   search: string = '', 
-  roleFilter: string = ''
+  roleFilter: string = '',
+  typeFilter: string = '',
 ) {
   const offset = (page - 1) * pageSize;
   
@@ -119,7 +121,11 @@ export async function getContacts(
     domain.push('|', ['name', 'ilike', search], ['email', 'ilike', search]);
   }
   if (roleFilter && roleFilter !== 'all') {
-    domain.push(['x_re_role', '=', roleFilter]);
+    domain.push(['x_studio_role', '=', roleFilter]);
+  }
+
+  if (typeFilter && typeFilter !== 'all') {
+      domain.push(['x_studio_type', '=', typeFilter]);
   }
 
   try {
@@ -129,7 +135,7 @@ export async function getContacts(
     // 2. Récupérer les données
     const records = await odooCall('res.partner', 'search_read', [
       domain,
-      ['id', 'name', 'email', 'phone', 'x_studio_role', 'create_date', 'x_studio_source', 'x_studio_type'], // Fields
+      ['id', 'name', 'email', 'phone', 'x_studio_role', 'create_date', 'x_studio_source', 'x_studio_type'],
       offset, // Offset
       pageSize, // Limit
       'create_date desc' // Order
@@ -144,7 +150,7 @@ export async function getContacts(
       role: c.x_studio_role || 'N/A',
       source: c.x_studio_source,
       budgetMin: 0, budgetMax: 0, preferredLocation: '', // Champs non affichés dans la liste
-      x_studio_type: c.x_studio_type || 'private',
+      type: c.x_studio_type || 'private',
       createdAt: c.create_date || '',
     }));
 
@@ -318,17 +324,16 @@ export async function getContactCounts() {
         private: 0, // Fallback ou rôle 'buyer'/'tenant'
         all: 0
     };
+    console.log(groups);
 
     let total = 0;
     groups.forEach((g: any) => {
+
         const role = g.x_studio_type; // ex: 'internal_agent'
-        const count = g.x_studio_type;
+        const count = g.x_studio_type_count;
         if (role && counts.hasOwnProperty(role)) {
             // @ts-ignore
             counts[role] = count;
-        } else if (role === 'buyer' || role === 'tenant') {
-             // On peut grouper acheteurs/locataires sous "Clients"
-             counts.private += count;
         }
         total += count;
     });

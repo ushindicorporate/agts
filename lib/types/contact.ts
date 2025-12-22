@@ -11,7 +11,7 @@ export interface REContact {
   budgetMax: number;
   preferredLocation: string;
   source: LeadSource;
-  x_studio_type: 'internal_agent' | 'internal_agency' | 'external_agent' | 'external_agency' | 'promoter' | 'private'; // Champ personnalisé Odoo
+  type: 'internal_agent' | 'internal_agency' | 'external_agent' | 'external_agency' | 'promoter' | 'private';
   notes?: string; // Standard Odoo field 'comment'
   tags?: Array<[number, string]>; // Odoo Many2many field for categories/tags
   createdAt?: string; // Date de création du contact
