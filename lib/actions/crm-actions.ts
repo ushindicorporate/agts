@@ -178,17 +178,24 @@ export async function getContactHistory(partnerId: number) {
 }
 
 // Ajouter une note interne
-export async function addLogNote(partnerId: number, content: string) {
+export async function addLogNote(resId: number, content: string, model: string = 'res.partner') {
   try {
-    await odooCall('res.partner', 'message_post', [
-      [partnerId],
+    await odooCall(model, 'message_post', [ // Utilisation du modèle dynamique
+      [resId],
       {
         body: content,
         message_type: 'comment',
-        subtype_xmlid: 'mail.mt_note', // Important: mt_note = Note interne (pas d'email envoyé au client)
+        subtype_xmlid: 'mail.mt_note', 
       }
     ]);
-    revalidatePath(`/contacts/${partnerId}`);
+    
+    // Revalidation intelligente selon le modèle
+    if (model === 'crm.lead') {
+        revalidatePath('/dashboard/leads'); // Pour rafraîchir le drawer si besoin
+    } else {
+        revalidatePath(`/dashboard/contacts/${resId}`);
+    }
+    
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -249,5 +256,33 @@ export async function createPropertyLead(propertyId: number, propertyName: strin
     return { success: true, leadId };
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+}
+
+export async function getActivityHistory(resModel: string, resId: number) {
+  try {
+    const messages = await odooCall('mail.message', 'search_read', [
+      [
+        ['model', '=', resModel], // 'res.partner' ou 'crm.lead'
+        ['res_id', '=', resId],
+        ['message_type', '!=', 'user_notification'] // On garde les notifs système (tracking) mais pas les trucs purement techniques
+      ],
+      ['id', 'date', 'body', 'author_id', 'message_type', 'subtype_id', 'tracking_value_ids'], // tracking_value_ids contient les changements de champs
+      0, 20, 'date desc'
+    ]) as any[];
+
+    // Pour les changements de stage, Odoo stocke ça dans tracking_value_ids
+    // C'est complexe à parser via XML-RPC simple sans faire d'autres appels.
+    // Mais souvent le 'body' contient déjà un résumé HTML généré par Odoo (ex: "Stage changed: New -> Won")
+    
+    return messages.map((m: any) => ({
+      id: m.id,
+      date: m.date,
+      body: m.body, // HTML
+      author: m.author_id ? m.author_id[1] : 'Système',
+      type: m.message_type
+    }));
+  } catch (error) {
+    return [];
   }
 }

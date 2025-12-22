@@ -2,6 +2,7 @@ export interface CRMStage {
   id: number;
   name: string;
   sequence: number;
+  probability?: number; // Probabilité de succès en pourcentage
 }
 
 export interface CRMLead {
@@ -13,4 +14,7 @@ export interface CRMLead {
   stageId: number;
   priority?: string; // '0', '1', '2', '3' stars in Odoo
   createDate: string;
+  phone?: string;
+  email?: string;
+  userId?: number | null;
 }
