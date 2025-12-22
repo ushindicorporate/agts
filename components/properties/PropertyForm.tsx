@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Property } from '@/lib/types/property';
 import { upsertProperty } from '@/lib/actions/property-actions';
+import QuickContactDialog from '../crm/QuickContactDialog';
 
 // --- SCHÉMA DE VALIDATION ---
 const formSchema = z.object({
@@ -43,6 +44,7 @@ interface PropertyFormProps {
 
 export default function PropertyForm({ initialData, owners, onSuccess }: PropertyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ownersList, setOwnersList] = useState(owners);
   
   // Si initialData.id existe, on est en mode édition
   const propertyId = initialData?.id;
@@ -81,6 +83,13 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
       toast.error("Erreur", { description: result.error || "Une erreur est survenue." });
     }
   }
+
+  const handleNewOwnerAdded = (newContact: { id: number, name: string }) => {
+      // 1. On l'ajoute à la liste locale
+      setOwnersList((prev) => [...prev, newContact]);
+      // 2. On le sélectionne automatiquement dans le formulaire
+      form.setValue('ownerId', newContact.id);
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -179,29 +188,37 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                     />
                     
                     <div className="md:col-span-2 pt-2">
-                        <FormField
-                            control={form.control}
-                            name="ownerId"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Propriétaire (Client Odoo)</FormLabel>
-                                <Select 
-                                    onValueChange={(val) => field.onChange(Number(val))} 
-                                    defaultValue={field.value ? field.value.toString() : undefined}
-                                >
-                                    <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner un propriétaire..." /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {owners.length > 0 ? owners.map(owner => (
-                                            <SelectItem key={owner.id} value={owner.id.toString()}>
-                                                {owner.name}
-                                            </SelectItem>
-                                        )) : <SelectItem value="0" disabled>Aucun propriétaire trouvé</SelectItem>}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
+                        <div className="flex items-end gap-2">
+                            <FormField
+                                control={form.control}
+                                name="ownerId"
+                                render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormLabel>Propriétaire (Client Odoo)</FormLabel>
+                                    <Select 
+                                        onValueChange={(val) => field.onChange(Number(val))} 
+                                        defaultValue={field.value ? field.value.toString() : undefined}
+                                        value={field.value ? field.value.toString() : undefined} // Important pour la sélection auto
+                                    >
+                                        <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner un propriétaire..." /></SelectTrigger></FormControl>
+                                        <SelectContent>
+                                            {ownersList.length > 0 ? ownersList.map(owner => (
+                                                <SelectItem key={owner.id} value={owner.id.toString()}>
+                                                    {owner.name}
+                                                </SelectItem>
+                                            )) : <SelectItem value="0" disabled>Aucun propriétaire trouvé</SelectItem>}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                            
+                            {/* BOUTON D'AJOUT RAPIDE */}
+                            <div className="pb-1">
+                                <QuickContactDialog onSuccess={handleNewOwnerAdded} />
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
