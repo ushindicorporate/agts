@@ -6,16 +6,16 @@ import { Loader2 } from 'lucide-react';
 export default async function ContactsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; search?: string; role?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; type?: string, role?: string }>;
 }) {
   const params = await searchParams;
   const page = parseInt(params.page || '1');
   const search = params.search || '';
-  const role = params.role || ''; // Si vide, c'est 'all'
+  const type = params.type || ''; // Si vide, c'est 'all'
 
   // Appel serveur parallèle (Optimisation)
   const [contactsData, counts] = await Promise.all([
-    getContacts(page, 10, search, role),
+    getContacts(page, 10, search, "", type),
     getContactCounts()
   ]);
 

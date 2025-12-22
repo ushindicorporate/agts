@@ -113,6 +113,9 @@ export async function getContacts(
   typeFilter: string = '',
 ) {
   const offset = (page - 1) * pageSize;
+
+  console.log(page, search, roleFilter, typeFilter);
+  
   
   // Construction du Domaine Odoo (Filtres)
   const domain: any[] = [['customer_rank', '>', 0]]; // On ne veut que les clients
@@ -324,7 +327,6 @@ export async function getContactCounts() {
         private: 0, // Fallback ou rôle 'buyer'/'tenant'
         all: 0
     };
-    console.log(groups);
 
     let total = 0;
     groups.forEach((g: any) => {

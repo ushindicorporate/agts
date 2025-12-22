@@ -18,12 +18,12 @@ export default function ContactsTabsWrapper({ contacts, pageCount, currentPage, 
   const pathname = usePathname();
   
   // Le rôle actuel est lu depuis l'URL, par défaut 'all'
-  const currentTab = searchParams.get('role') || 'all';
+  const currentTab = searchParams.get('type') || 'all';
 
   const handleTabChange = (val: string) => {
     const params = new URLSearchParams(searchParams);
-    if (val === 'all') params.delete('role');
-    else params.set('role', val);
+    if (val === 'all') params.delete('type');
+    else params.set('type', val);
     
     params.set('page', '1'); // Reset pagination quand on change d'onglet
     router.push(`${pathname}?${params.toString()}`);
