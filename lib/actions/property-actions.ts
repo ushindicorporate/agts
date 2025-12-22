@@ -195,3 +195,26 @@ export async function getOwnersList() {
         return [];
     }
 }
+
+export async function getPropertyLeads(propertyId: number) {
+  try {
+    // On cherche les leads où le champ x_studio_property_id correspond à notre bien
+    // Si tu utilises le standard Odoo, c'est parfois lié via des tags ou des descriptions,
+    // mais le champ Many2one x_studio_property_id est le plus propre.
+    const leads = await odooCall('crm.lead', 'search_read', [
+      [['x_studio_bien', '=', propertyId]], // Assure-toi que ce champ existe dans Odoo
+      ['id', 'name', 'partner_id', 'stage_id', 'expected_revenue', 'create_date']
+    ]) as any[];
+
+    return leads.map((l: any) => ({
+      id: l.id,
+      name: l.name,
+      partner: l.partner_id ? l.partner_id[1] : 'Inconnu',
+      stage: l.stage_id ? l.stage_id[1] : 'Nouveau',
+      revenue: l.expected_revenue,
+      date: l.create_date
+    }));
+  } catch (error) {
+    return [];
+  }
+}

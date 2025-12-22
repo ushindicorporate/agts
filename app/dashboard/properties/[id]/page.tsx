@@ -20,12 +20,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { getPropertyById } from '@/lib/actions/property-actions';
+import { getPropertyById, getPropertyLeads } from '@/lib/actions/property-actions';
 import { getGalleryImages } from '@/lib/actions/image-actions';
 import { formatPrice } from '@/lib/utils';
 import DocumentsList from '@/components/documents/DocumentsList';
 import UploadButton from '@/components/documents/UploadButton';
 import { getDocuments } from '@/lib/actions/document-actions';
+import { getContacts } from '@/lib/actions/crm-actions';
+import PropertyLeads from '@/components/properties/PropertyLeads';
 
 // Utilitaire pour les couleurs de statut
 const getStatusBadge = (status: string) => {
@@ -55,21 +57,21 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
   if (isNaN(propertyId)) return notFound();
 
   // Chargement Parallèle : Infos Bien + Galerie Photos
-  const [property, gallery] = await Promise.all([
+  const [property, gallery, documents, leads, contactsData] = await Promise.all([
     getPropertyById(propertyId),
-    getGalleryImages(propertyId)
+    getGalleryImages(propertyId),
+    getDocuments('product.template', propertyId),
+    getPropertyLeads(propertyId),
+    getContacts(1, 1000)
   ]);
 
   if (!property) return notFound();
 
-  // Construction de la liste d'images pour la grille (Image principale Odoo + Galerie)
-  // Note: Si tu as mappé image_1920 dans getPropertyById, tu peux l'ajouter en premier
-  // Ici on se base sur la galerie récupérée
-  const allImages = gallery.length > 0 ? gallery : []; 
+  const allImages = gallery.length > 0 ? gallery : [];
+  const contactList = contactsData.contacts.map(c => ({ id: c.id, name: c.name }));
   
   // Placeholder si aucune image
   const mainImageSrc = allImages.length > 0 ? allImages[0].src : '/placeholder-house.jpg';
-  const documents = await getDocuments('product.template', propertyId);
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 space-y-8">
@@ -297,6 +299,12 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                 </CardContent>
             </Card>
 
+            <PropertyLeads 
+                leads={leads} 
+                propertyId={propertyId} 
+                propertyName={property.name}
+                allContacts={contactList}
+            />
             {/* Quick Actions */}
             <Card>
                 <CardContent className="p-4 space-y-3">

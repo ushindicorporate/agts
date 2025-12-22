@@ -237,7 +237,12 @@ export async function updateContactTags(partnerId: number, tagIds: number[]) {
   }
 }
 
-export async function createPropertyLead(propertyId: number, propertyName: string, contactId: number) {
+export async function createPropertyLead(
+  propertyId: number, 
+  propertyName: string, 
+  contactId: number,
+  expectedRevenue: number = 0
+) {
   try {
     // 1. Récupérer le nom du contact pour le titre du lead
     const contact = await odooCall('res.partner', 'read', [[contactId], ['name']]) as REContact[];
@@ -246,8 +251,7 @@ export async function createPropertyLead(propertyId: number, propertyName: strin
     const leadId = await odooCall('crm.lead', 'create', [{
       name: `${propertyName} - ${contactName}`, // Titre: "Villa Mer - Jean Dupont"
       partner_id: contactId,
-      // Si tu as un champ Many2one vers property dans crm.lead (recommandé), mets-le ici
-      // x_studio_property_id: propertyId, 
+      x_studio_bien: propertyId,
       description: `Lead créé depuis l'application pour le bien #${propertyId}: ${propertyName}`,
       type: 'opportunity',
       priority: '2', // High
