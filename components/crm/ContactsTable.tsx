@@ -168,7 +168,17 @@ export default function ContactsTable({ data, pageCount, currentPage }: Contacts
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow
+                  className='hover:cursor-pointer'
+                  key={row.id} data-state={row.getIsSelected() && "selected"}
+                  onClick={(e) => {
+                      const target = e.target as HTMLElement;
+                      if (target.closest('button') || target.closest('[data-radix-collection-item]')) {
+                          return;
+                      }
+                      router.push(`/dashboard/contacts/${row.original.id}`);
+                  }}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

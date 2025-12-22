@@ -28,6 +28,7 @@ import UploadButton from '@/components/documents/UploadButton';
 import { getDocuments } from '@/lib/actions/document-actions';
 import { getContacts } from '@/lib/actions/crm-actions';
 import PropertyLeads from '@/components/properties/PropertyLeads';
+import BackButton from '@/components/SmartBackButton';
 
 // Utilitaire pour les couleurs de statut
 const getStatusBadge = (status: string) => {
@@ -78,11 +79,12 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
       
       {/* --- HEADER NAVIGATION --- */}
       <div className="flex justify-between items-center">
-        <Link href="/dashboard/properties">
+        <BackButton label="Retour au portefeuille" href="/dashboard/properties" />
+        {/* <Link href="/dashboard/properties">
           <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-primary transition-colors">
             <ArrowLeft className="mr-2 h-4 w-4" /> Retour au portefeuille
           </Button>
-        </Link>
+        </Link> */}
         <Link href={`/dashboard/properties/${propertyId}/edit`}>
           <Button>
             <Edit className="mr-2 h-4 w-4" /> Modifier le bien
