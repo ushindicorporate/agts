@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/Layout/AppSidebar";
 import { UserNav } from "@/components/Layout/UserNav"; // Import du nouveau composant
 import { createClient } from "@/lib/supabase/server";
 import { SidebarContent } from "@/components/Layout/SidebarContent";
 import { MobileNav } from "@/components/Layout/MobileNav";
+import { Search } from "lucide-react";
+import { Breadcrumbs } from "@/components/Layout/Breadcrumbs";
 
 export default async function DashboardLayout({
   children,
@@ -49,9 +50,16 @@ export default async function DashboardLayout({
         
         {/* Header Interne */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b bg-white px-8 shadow-sm z-10">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
             <MobileNav /> {/* Visible uniquement sur mobile via CSS du composant */}
-            <h2 className="text-lg font-semibold text-gray-800 hidden sm:block">Espace Agent</h2>
+            <div className="hidden lg:flex items-center px-3 py-1.5 bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition cursor-pointer w-64 group">
+              <Search className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-medium">Rechercher (Immo, Auto...)</span>
+              <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-white px-1.5 font-mono text-[10px] font-medium text-slate-500 opacity-100">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </div>
+            <Breadcrumbs />
           </div>
           
           <div className="flex items-center gap-4">

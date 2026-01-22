@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { 
-  TrendingUp, 
-  Users, 
+  TrendingUp,
   Building2, 
   FileText,
   ListTodo,

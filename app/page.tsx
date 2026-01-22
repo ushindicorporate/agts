@@ -2,94 +2,111 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, Loader2, AlertCircle } from "lucide-react";
+import { Lock, Mail, Loader2, AlertCircle, Building2 } from "lucide-react"; // Ajout de Building2
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner"; // Utilisation du toaster pour le mode entreprise
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient(); // Initialisation
+  const supabase = createClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
 
-    // 1. Appel Supabase Auth
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message); // Ex: "Invalid login credentials"
+      if (error) {
+        toast.error("Échec de connexion", {
+          description: error.message === "Invalid login credentials" 
+            ? "Identifiants incorrects. Vérifiez votre email et mot de passe." 
+            : error.message,
+        });
+        return;
+      }
+
+      if (data.user) {
+        toast.success("Connexion réussie", {
+          description: "Bienvenue sur la plateforme AGTS.",
+        });
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch (err) {
+      toast.error("Erreur système", {
+        description: "Une erreur inattendue est survenue.",
+      });
+    } finally {
       setIsLoading(false);
-    } else {
-      router.refresh();
-      router.push("/dashboard");
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-sm space-y-8 rounded-xl bg-white p-10 shadow-lg border border-gray-200">
+    // Background plus "Corporate" avec un léger dégradé
+    <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] dark:bg-slate-950 px-4">
+      {/* Petit décor pour le mode entreprise */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-50/50 blur-3xl" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-slate-100 blur-3xl" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md space-y-8 rounded-2xl bg-white dark:bg-slate-900 p-8 shadow-2xl border border-slate-200 dark:border-slate-800">
         
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-white">
-            <Lock className="h-6 w-6" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-slate-900 text-white shadow-lg">
+            <Building2 className="h-8 w-8" />
           </div>
-          <h2 className="mt-6 text-2xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             AGTS Sarlu
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Accès réservé aux agents
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
+            Gestion Immobilière & Automobile
           </p>
         </div>
 
-        {error && (
-          <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600 border border-red-200">
-            <AlertCircle className="h-4 w-4" />
-            {error === "Invalid login credentials" ? "Email ou mot de passe incorrect." : error}
-          </div>
-        )}
-
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label htmlFor="email" className="sr-only">Email</label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Mail className="h-5 w-5 text-gray-400" />
+        <form className="mt-10 space-y-5" onSubmit={handleLogin}>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
+                Email professionnel
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 transition-colors group-focus-within:text-blue-600">
+                  <Mail className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
-                  id="email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 py-3 pl-10 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 py-3 pl-10 text-slate-900 dark:text-white transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none sm:text-sm"
                   placeholder="agent@agts.cd"
                 />
               </div>
             </div>
 
-            <div>
-              <label htmlFor="password" className="sr-only">Mot de passe</label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Lock className="h-5 w-5 text-gray-400" />
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">
+                Mot de passe
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 transition-colors group-focus-within:text-blue-600">
+                  <Lock className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
-                  id="password"
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 py-3 pl-10 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 py-3 pl-10 text-slate-900 dark:text-white transition-all focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none sm:text-sm"
                   placeholder="••••••••"
                 />
               </div>
@@ -99,12 +116,19 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="group relative flex w-full justify-center rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full flex justify-center items-center rounded-xl bg-slate-900 py-3.5 text-sm font-bold text-white transition-all hover:bg-slate-800 hover:shadow-lg active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-            {isLoading ? "Vérification..." : "Se connecter"}
+            {isLoading ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              "Accéder au tableau de bord"
+            )}
           </button>
         </form>
+
+        <p className="text-center text-xs text-slate-400">
+          © {new Date().getFullYear()} AGTS Sarlu. Système de gestion sécurisé.
+        </p>
       </div>
     </div>
   );
