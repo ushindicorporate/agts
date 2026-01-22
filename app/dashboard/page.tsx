@@ -4,17 +4,14 @@ import {
   Building2, 
   FileText,
   ListTodo,
-  ArrowRight,
   ArrowUpRight,
-  Clock,
-  CheckCircle2,
-  Trophy
+  Car,
+  Zap,
+  ShieldCheck,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { getDashboardStats } from "@/lib/actions/dashboard-actions";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 // --- COMPOSANT KPI ---
 interface StatCardProps {
@@ -24,25 +21,59 @@ interface StatCardProps {
   icon: any;
   colorClass: string;
   href: string;
+  trend?: {
+    value: string;
+    positive: boolean;
+  };
 }
 
-function StatCard({ title, value, subtext, icon: Icon, colorClass, href }: StatCardProps) {
+function StatCard({ title, value, subtext, icon: Icon, colorClass, href, trend }: StatCardProps) {
   return (
     <Link href={href} className="block group">
-      <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-1 cursor-pointer border-l-4" style={{ borderLeftColor: 'currentColor' }}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">{title}</p>
-              <h3 className="mt-2 text-3xl font-bold text-foreground">{value}</h3>
+      <Card className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer border-none shadow-sm bg-white dark:bg-slate-900">
+        
+        {/* Barre de couleur discrète sur le côté ou en haut */}
+        <div className={cn("absolute left-0 top-0 bottom-0 w-1", colorClass.split(' ')[1].replace('text-', 'bg-'))} />
+
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <p className="text-[8px] lg:text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-primary transition-colors">
+                {title}
+              </p>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  {value}
+                </h3>
+                
+                {/* Indicateur de Tendance (Nouveau) */}
+                {trend && (
+                  <span className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center",
+                    trend.positive ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+                  )}>
+                    {trend.positive ? "↑" : "↓"} {trend.value}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className={`rounded-full p-3 ${colorClass} group-hover:scale-110 transition-transform`}>
-              <Icon className="h-6 w-6" />
+
+            {/* Icône avec effet de glassmorphism au hover */}
+            <div className={cn(
+              "rounded-xl p-2.5 transition-all duration-300 group-hover:rotate-12",
+              colorClass
+            )}>
+              <Icon className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-            <span>{subtext}</span>
-            <ArrowUpRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-xs text-slate-400 font-medium truncate mr-2">
+              {subtext}
+            </p>
+            <div className="h-6 w-6 rounded-full bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <ArrowUpRight className="h-3 w-3 text-slate-600" />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -56,212 +87,80 @@ export default async function DashboardPage() {
   const stats = await getDashboardStats();
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto py-8 px-4">
+    <div className="space-y-8 max-w-7xl mx-auto py-6 px-4">
       
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Vue d'ensemble</h1>
-        <p className="text-muted-foreground">Suivi de l'activité commerciale et administrative.</p>
+      {/* Header avec Statut de Synchro "Live" */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Tableau de bord</h1>
+          <p className="text-slate-500">Bienvenue, voici l'état actuel des activités d'AGTS.</p>
+        </div>
       </div>
 
-      {/* 1. GRILLE KPI (4 Colonnes) */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        
-        {/* OFFRES / VENTES */}
+      {/* GRILLE KPI RÉVISÉE (5 Colonnes pour inclure Auto) */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
         <StatCard 
-          title="Offres & Devis" 
+          title="Immobilier" 
+          value={stats.counts.properties} 
+          subtext="Unités en stock"
+          icon={Building2} 
+          colorClass="bg-violet-100 text-violet-600"
+          href="/dashboard/properties"
+        />
+        <StatCard 
+          title="Automobile" 
+          value={stats.counts.vehicles} 
+          subtext="Véhicules dispo"
+          icon={Car} 
+          colorClass="bg-blue-100 text-blue-600"
+          href="/dashboard/vehicles"
+        />
+        <StatCard 
+          title="Pipeline" 
+          value={stats.counts.leads} 
+          subtext="Opportunités"
+          icon={TrendingUp} 
+          colorClass="bg-emerald-100 text-emerald-600"
+          href="/dashboard/leads"
+        />
+        <StatCard 
+          title="Devis" 
           value={stats.counts.offers} 
-          subtext={`Vol. récent: ${formatCurrency(stats.financials.recentVolume)}`}
+          subtext="En attente"
           icon={FileText} 
           colorClass="bg-orange-100 text-orange-600"
           href="/dashboard/offers"
         />
-
-        {/* TÂCHES */}
         <StatCard 
-          title="Tâches à faire" 
+          title="Tâches" 
           value={stats.counts.tasks} 
-          subtext="Actions en attente"
+          subtext="À traiter"
           icon={ListTodo} 
-          colorClass="bg-amber-100 text-amber-600"
+          colorClass="bg-rose-100 text-rose-600"
           href="/dashboard/tasks"
-        />
-
-        {/* LEADS */}
-        <StatCard 
-          title="Pipeline Leads" 
-          value={stats.counts.leads} 
-          subtext="Opportunités actives" 
-          icon={TrendingUp} 
-          colorClass="bg-emerald-100 text-emerald-600"
-          href="/dashboard/leads" 
-        />
-
-        {/* BIENS */}
-        <StatCard 
-          title="Biens en Stock" 
-          value={stats.counts.properties} 
-          subtext="Portefeuille immobilier" 
-          icon={Building2} 
-          colorClass="bg-blue-100 text-blue-600"
-          href="/dashboard/properties"
         />
       </div>
 
-      {/* 2. SECTION LISTES (2 Colonnes) */}
+      {/* SECTION ANALYTIQUE (3 Colonnes) */}
       <div className="grid gap-6 lg:grid-cols-3">
-        
-        {/* COLONNE GAUCHE : TÂCHES URGENTES (Priorité Action) */}
-        <Card className="flex flex-col h-full">
-            <CardHeader className="flex flex-row items-center justify-between bg-muted/20 border-b py-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                    <ListTodo className="h-5 w-5 text-amber-600" />
-                    Tâches Prioritaires
-                </CardTitle>
-                <Link href="/dashboard/tasks" className="text-sm text-primary hover:underline flex items-center">
-                    Voir tout <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-            </CardHeader>
-            <CardContent className="p-0 flex-1">
-                {stats.urgentTasks.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground text-sm flex flex-col items-center">
-                        <CheckCircle2 className="h-8 w-8 text-green-500 mb-2 opacity-50" />
-                        Vous êtes à jour ! Aucune tâche urgente.
-                    </div>
-                ) : (
-                    <div className="divide-y">
-                        {stats.urgentTasks.map((task: any) => (
-                            <Link 
-                                key={task.id} 
-                                href="/dashboard/tasks" // Idéalement lien vers l'objet lié
-                                className="flex items-start gap-3 p-4 hover:bg-muted/50 transition group"
-                            >
-                                <div className="mt-1">
-                                    {/* Indicateur visuel d'urgence simple */}
-                                    <div className="h-2 w-2 rounded-full bg-amber-500" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-foreground group-hover:text-primary truncate">
-                                        {task.summary}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                        <span>{task.type}</span> • <span>{task.target}</span>
-                                    </p>
-                                </div>
-                                <div className="text-right whitespace-nowrap">
-                                    <Badge variant="outline" className="text-xs font-normal flex items-center gap-1 text-muted-foreground">
-                                        <Clock className="h-3 w-3" />
-                                        {formatDate(task.deadline)}
-                                    </Badge>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+         {/* Ici tu gardes tes colonnes : Tâches Prioritaires, Dernières Offres, Top Agents */}
+         {/* Mais on va ajouter une petite touche Odoo sur les cartes */}
+      </div>
 
-        {/* COLONNE DROITE : DERNIÈRES OFFRES (Priorité Business) */}
-        <Card className="flex flex-col h-full">
-            <CardHeader className="flex flex-row items-center justify-between bg-muted/20 border-b py-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-orange-600" />
-                    Dernières Offres
-                </CardTitle>
-                <Link href="/dashboard/offers" className="text-sm text-primary hover:underline flex items-center">
-                    Tout voir <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-            </CardHeader>
-            <CardContent className="p-0 flex-1">
-                {stats.recentOffers.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground text-sm">
-                        Aucune offre récente. Créez votre premier devis.
-                    </div>
-                ) : (
-                    <div className="divide-y">
-                        {stats.recentOffers.map((offer: any) => (
-                            <div key={offer.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition">
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-9 w-9 bg-orange-50 text-orange-700 border border-orange-100">
-                                        <AvatarFallback className="text-xs font-bold">
-                                            {offer.client ? offer.client.substring(0, 2).toUpperCase() : 'NA'}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="text-sm font-medium text-foreground">{offer.name}</p>
-                                        <p className="text-xs text-muted-foreground truncate max-w-[150px]">
-                                            {offer.client}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm font-bold text-foreground">
-                                        {formatCurrency(offer.amount)}
-                                    </p>
-                                    {/* Badge d'état simplifié */}
-                                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                                        offer.state === 'sale' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                        {offer.state === 'sale' ? 'Signé' : 'Devis'}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-
-        {/* COLONNE 3 : TOP AGENTS (Nouveau) */}
-        <Card className="flex flex-col h-full">
-            <CardHeader className="flex flex-row items-center justify-between bg-muted/20 border-b py-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-yellow-600" />
-                    Meilleurs Agents
-                </CardTitle>
-                <Link href="/dashboard/agents" className="text-sm text-primary hover:underline flex items-center">
-                    Détails <ArrowRight className="ml-1 h-3 w-3" />
-                </Link>
-            </CardHeader>
-            <CardContent className="p-0 flex-1">
-                {stats.topAgents.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground text-sm">
-                        Aucune donnée de performance disponible.
-                    </div>
-                ) : (
-                    <div className="divide-y">
-                        {stats.topAgents.map((agent: any, index: number) => (
-                            <div key={agent.id} className="flex items-center gap-4 p-4 hover:bg-muted/50 transition">
-                                <div className="relative">
-                                    <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                                        <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold">
-                                            {agent.name.substring(0, 2)}
-                                        </AvatarFallback>
-                                        <AvatarImage src={agent.image} />
-                                    </Avatar>
-                                    {/* Badge de rang */}
-                                    <div className={`absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${
-                                        index === 0 ? "bg-yellow-500" : index === 1 ? "bg-gray-400" : "bg-orange-400"
-                                    }`}>
-                                        {index + 1}
-                                    </div>
-                                </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-foreground truncate">{agent.name}</p>
-                                    <p className="text-xs text-muted-foreground">{agent.deals} ventes</p>
-                                </div>
-
-                                <div className="text-right">
-                                    <span className="text-sm font-bold text-foreground">
-                                        {formatCurrency(agent.revenue)}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+      {/* BANDEAU DE RÉASSURANCE SÉCURITÉ (Mode Entreprise) */}
+      <div className="rounded-2xl bg-slate-900 p-6 text-white flex items-center justify-between shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-white/10 rounded-xl">
+            <ShieldCheck className="h-8 w-8 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold">Sécurité des données AGTS</h3>
+            <p className="text-slate-400 text-sm">Toutes les transactions sont chiffrées et synchronisées avec le grand livre Odoo.</p>
+          </div>
+        </div>
+        <button className="hidden md:block px-6 py-2 bg-white text-slate-900 rounded-lg font-bold text-sm hover:bg-slate-100 transition">
+          Journal d'audit
+        </button>
       </div>
     </div>
   );

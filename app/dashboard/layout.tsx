@@ -5,6 +5,8 @@ import { SidebarContent } from "@/components/Layout/SidebarContent";
 import { MobileNav } from "@/components/Layout/MobileNav";
 import { Search } from "lucide-react";
 import { Breadcrumbs } from "@/components/Layout/Breadcrumbs";
+import { SearchTrigger } from "@/components/Layout/SearchTrigger";
+import { CommandSearch } from "@/components/Layout/CommandSearch";
 
 export default async function DashboardLayout({
   children,
@@ -52,13 +54,7 @@ export default async function DashboardLayout({
         <header className="flex h-16 shrink-0 items-center justify-between border-b bg-white px-8 shadow-sm z-10">
           <div className="flex items-center gap-6">
             <MobileNav /> {/* Visible uniquement sur mobile via CSS du composant */}
-            <div className="hidden lg:flex items-center px-3 py-1.5 bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition cursor-pointer w-64 group">
-              <Search className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium">Rechercher (Immo, Auto...)</span>
-              <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-white px-1.5 font-mono text-[10px] font-medium text-slate-500 opacity-100">
-                <span className="text-xs">⌘</span>K
-              </kbd>
-            </div>
+            <SearchTrigger />
             <Breadcrumbs />
           </div>
           
@@ -82,6 +78,7 @@ export default async function DashboardLayout({
             />
           </div>
         </header>
+        {/* <CommandSearch /> */}
 
         {/* Contenu de la page */}
         <div className="flex-1 overflow-y-auto p-8">
