@@ -1,12 +1,13 @@
 // types/property.ts
 
 export type PropertyType = 'apartment' | 'villa' | 'land' | 'commercial';
-export type OfferType = 'À vendre' | 'À louer';
+// J'ajoute les types exacts que tu as dans ton mapping pour éviter les erreurs de cast
+export type OfferType = 'À vendre' | 'À louer' | 'sale' | 'rent'; 
 export type PropertyStatus = 'available' | 'reserved' | 'rented' | 'sold';
 
 export interface Property {
   id?: number;
-  name: string;        // Titre de l'annonce
+  name: string;
   type: PropertyType;
   
   // Localisation
@@ -15,25 +16,26 @@ export interface Property {
   
   // Financier
   offerType: OfferType;
-  price: number;       // Prix de vente ou Loyer mensuel
-  commission: number;  // Montant de la com
+  price: number;
+  commission: number; // Requis par ton interface
   
   // Statut
   status: PropertyStatus;
-  surface: number;  // Surface en m²
+  surface: number;
   bedrooms?: number;
   
-  // Propriétaire (Lien vers res.partner)
+  // Propriétaire
   ownerId?: number;
-  ownerName?: string; // Pour l'affichage
+  ownerName?: string;
   
-  // Tech (pour l'image plus tard)
+  // Image & Business
   mainImage?: string; 
+  activeLeads?: number; // ON AJOUTE CECI ICI
 
-  // Autres caractéristiques
-  salons?: number;    // Nombre de salons
-  kitchens?: number;  // Nombre de cuisines
-  bathrooms?: number; // Nombre de salles de bain
-  parking?: boolean;  // Parking disponible
-  description?: string; // Description détaillée
+  // Caractéristiques
+  salons?: number;
+  kitchens?: number;
+  bathrooms?: number;
+  parking?: boolean;
+  description?: string;
 }

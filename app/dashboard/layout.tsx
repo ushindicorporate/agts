@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import { Breadcrumbs } from "@/components/Layout/Breadcrumbs";
 import { SearchTrigger } from "@/components/Layout/SearchTrigger";
 import { CommandSearch } from "@/components/Layout/CommandSearch";
+import { ModeToggle } from "@/components/Layout/ModeToggle";
 
 export default async function DashboardLayout({
   children,
@@ -51,31 +52,41 @@ export default async function DashboardLayout({
       <main className="flex-1 flex flex-col overflow-hidden">
         
         {/* Header Interne */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b bg-white px-8 shadow-sm z-10">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b bg-white dark:bg-slate-900 px-8 shadow-sm z-10">
           <div className="flex items-center gap-6">
-            <MobileNav /> {/* Visible uniquement sur mobile via CSS du composant */}
-            <SearchTrigger />
+            <MobileNav />
+            <SearchTrigger /> 
             <Breadcrumbs />
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-gray-900">{displayName}</p>
-              <div className="flex items-center justify-end gap-1">
-                 <p className="text-xs text-gray-500">Agent Immobilier</p>
-                 {profile?.odoo_partner_id && (
-                    <span className="flex h-2 w-2 rounded-full bg-green-500" title="Synchronisé Odoo" />
-                 )}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* INDICATEUR ODOO (Optionnel ici) */}
+            {profile?.odoo_partner_id && (
+              <div className="hidden sm:flex h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Synchronisé Odoo" />
+            )}
+
+            {/* LE SWITCHER DE THÈME */}
+            <ModeToggle />
+
+            <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block" />
+
+            <div className="flex items-center gap-4">
+              <div className="text-right hidden lg:block">
+                <p className="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">
+                  {displayName}
+                </p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tighter">
+                  Agent AGTS
+                </p>
               </div>
+              
+              <UserNav 
+                fullName={displayName} 
+                email={displayEmail} 
+                avatarUrl={profile?.avatar_url || ""}
+                initials={initials}
+              />
             </div>
-            
-            {/* Le composant Client qui contient le Menu et le Logout */}
-            <UserNav 
-              fullName={displayName} 
-              email={displayEmail} 
-              avatarUrl={profile?.avatar_url || ""}
-              initials={initials}
-            />
           </div>
         </header>
         {/* <CommandSearch /> */}

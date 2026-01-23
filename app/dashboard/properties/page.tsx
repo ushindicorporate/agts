@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Plus, Search, Home, Bed, Ruler, MapPin } from 'lucide-react';
+import { Plus, Search, Home, Bed, Ruler, MapPin, Users } from 'lucide-react';
 
 // Actions & Composants
-import { getProperties } from '@/lib/actions/property-actions'; // Vérifie ton chemin d'import
+import { getProperties } from '@/lib/actions/property-actions';
 import PropertyFilters from '@/components/properties/PropertyFilters';
 
 // UI Components
@@ -12,6 +12,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { formatPrice } from '@/lib/utils';
+import PropertyImage from '@/components/properties/property-image';
 
 // --- HELPERS VISUELS ---
 
@@ -129,29 +130,30 @@ export default async function PropertiesListPage({
                             key={property.id}
                             className="overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group bg-card border-border/60"
                         >
-                            {/* LIEN GLOBALE SUR LA CARTE (Partie Supérieure) */}
                             <Link 
                                 href={`/dashboard/properties/${property.id}`} 
                                 className="flex flex-col flex-1 cursor-pointer"
                             >
-                                {/* IMAGE */}
                                 <div className="relative bg-muted">
-                                    <AspectRatio ratio={4 / 3}>
-                                        <img
-                                            src={property.mainImage || '/placeholder-house.jpg'}
-                                            alt={property.name}
-                                            className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
-                                            loading="lazy"
-                                        />
-                                    </AspectRatio>
+                                    <PropertyImage 
+                                        src={property.mainImage} 
+                                        alt={property.name} 
+                                    />
 
-                                    <div className="absolute top-3 left-3">
-                                        {getStatusBadge(property.status)}
-                                    </div>
+                                    <div className="absolute top-3 left-3">{getStatusBadge(property.status)}</div>
+
+                                    {property.activeLeads! > 0 && (
+                                        <div className="absolute top-3 right-3">
+                                            <Badge className="bg-black/50 backdrop-blur-md border-none text-white gap-1 text-[10px]">
+                                                <Users className="h-3 w-3" />
+                                                {property.activeLeads} Leads
+                                            </Badge>
+                                        </div>
+                                    )}
 
                                     <div className="absolute bottom-3 right-3">
                                         <Badge variant="secondary" className="text-sm font-bold px-3 py-1 shadow-sm backdrop-blur-md bg-white/90 text-black">
-                                            {formatPrice(property.price, property.offerType)}
+                                            {formatPrice(property.price, property.status === 'rented' ? '/mois' : '')}
                                         </Badge>
                                     </div>
                                 </div>

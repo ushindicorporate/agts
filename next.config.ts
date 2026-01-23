@@ -8,11 +8,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
-      // Plus tard, on ajoutera ici le domaine de votre Odoo
-      // {
-      //   protocol: 'https',
-      //   hostname: 'votre-instance-odoo.com',
-      // },
+      {
+        protocol: 'https',
+        hostname: 'votre-odoo-url.com', // Remplace par ton URL Odoo réelle
+        port: '',
+        pathname: '/web/image/**',
+      },
     ],
   },
 };

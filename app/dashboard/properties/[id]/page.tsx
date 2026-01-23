@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
+import {
   Edit, 
   MapPin, 
   Bed, 
@@ -29,6 +28,8 @@ import { getDocuments } from '@/lib/actions/document-actions';
 import { getContacts } from '@/lib/actions/crm-actions';
 import PropertyLeads from '@/components/properties/PropertyLeads';
 import BackButton from '@/components/SmartBackButton';
+import { PropertyGallery } from '@/components/properties/PropertyGallery';
+import { ShareButton } from '@/components/properties/ShareButton';
 
 // Utilitaire pour les couleurs de statut
 const getStatusBadge = (status: string) => {
@@ -111,7 +112,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
         </div>
         <div className="text-right">
             <p className="text-4xl font-bold text-primary">
-                {formatPrice(property.price, property.offerType)}
+                {formatPrice(property.price, property.status)}
             </p>
             <p className="text-sm text-muted-foreground font-medium">
                 {property.offerType === 'À vendre' ? 'Honoraires inclus' : 'Charges comprises'}
@@ -120,50 +121,14 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
       </div>
 
       {/* --- GALERIE PHOTOS --- */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[450px] rounded-2xl overflow-hidden shadow-sm">
-         {/* Grande Image (Moitié gauche ou 3/4) */}
-        <div className="md:col-span-2 lg:col-span-3 relative h-full bg-muted">
-             <img 
-                src={mainImageSrc} 
-                alt="Vue principale" 
-                className="object-cover w-full h-full hover:scale-105 transition duration-700 ease-in-out" 
-             />
-        </div>
-        
-        {/* Colonne latérale (Images 2 et 3) */}
-        <div className="hidden md:flex flex-col gap-4 h-full">
-            <div className="flex-1 relative bg-muted overflow-hidden">
-                {allImages[1] ? (
-                    <img src={allImages[1].src} alt="Vue 2" className="object-cover w-full h-full" />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                        <Home className="h-8 w-8 opacity-20" />
-                    </div>
-                )}
-            </div>
-            <div className="flex-1 relative bg-muted overflow-hidden">
-                {allImages[2] ? (
-                    <img src={allImages[2].src} alt="Vue 3" className="object-cover w-full h-full" />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                        <Home className="h-8 w-8 opacity-20" />
-                    </div>
-                )}
-                
-                {/* Overlay "+ X photos" */}
-                {allImages.length > 3 && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer hover:bg-black/70 transition">
-                        <span className="text-white font-bold text-xl">
-                            + {allImages.length - 3} photos
-                        </span>
-                    </div>
-                )}
-            </div>
-        </div>
-      </div>
+    <PropertyGallery 
+        images={gallery.map(img => ({ 
+            id: img.id, 
+            src: `/api/image/product.image/${img.id}` // On utilise aussi le proxy pour la galerie
+        }))} 
+    />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
-        
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
         {/* --- COLONNE GAUCHE : DÉTAILS (2/3) --- */}
         <div className="lg:col-span-2 space-y-8">
             
@@ -310,8 +275,20 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
             {/* Quick Actions */}
             <Card>
                 <CardContent className="p-4 space-y-3">
-                    <Button className="w-full bg-indigo-600 hover:bg-indigo-700">Créer une offre</Button>
-                    <Button variant="secondary" className="w-full">Imprimer la fiche</Button>
+                    {/* On peut maintenant créer une offre liée à Odoo */}
+                    <Button className="w-full bg-slate-900 hover:bg-slate-800 py-6 text-lg font-bold">
+                    Créer une offre
+                    </Button>
+                    
+                    {/* Notre nouveau bouton de partage */}
+                    <ShareButton 
+                    propertyName={property.name} 
+                    price={formatPrice(property.price + property.commission, property.offerType)} 
+                    />
+                    
+                    <Button variant="secondary" className="w-full">
+                    Générer la fiche PDF
+                    </Button>
                 </CardContent>
             </Card>
         </div>

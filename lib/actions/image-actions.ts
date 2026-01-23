@@ -46,17 +46,21 @@ export async function deleteGalleryImage(imageId: number, propertyId: number) {
 // 4. Récupérer les images de la galerie
 export async function getGalleryImages(propertyId: number) {
   try {
+    // On ne demande que l'ID et le nom. 
+    // Le poids de la réponse Odoo passe de ~500KB à ~1KB.
     const images = await odooCall('product.image', 'search_read', [
         [['product_tmpl_id', '=', propertyId]],
-        ['id', 'name', 'image_128'] // On charge les petites versions pour la liste
+        ['id', 'name'] 
     ]) as any[];
     
     return images.map((img: any) => ({
         id: img.id,
         name: img.name,
-        src: `data:image/png;base64,${img.image_128}`
+        // On génère l'URL vers notre API interne
+        src: `/api/image/product.image/${img.id}`
     }));
   } catch (error) {
+    console.error("Erreur chargement galerie:", error);
     return [];
   }
 }

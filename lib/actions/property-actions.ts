@@ -44,54 +44,39 @@ export async function getProperties(page = 1, pageSize = 9, filters: PropertyFil
   try {
     const totalCount = await odooCall('product.template', 'search_count', [domain]) as number;
 
-    // 2. On ajoute 'image_128' aux champs demandés
     const records = await odooCall('product.template', 'search_read', [
         domain,
         [
-            'id', 
-            'name', 
-            'list_price', 
-            'image_512',
-            'x_studio_type', 
-            'x_studio_localisation_adresse_quartier', 
-            'x_studio_city', 
-            'x_studio_statut',
-            'x_studio_surface_m',
+            'id', 'name', 'list_price', 
+            'x_studio_type', 'x_studio_localisation_adresse_quartier', 
+            'x_studio_city', 'x_studio_statut', 'x_studio_surface_m',
             'x_studio_nb_chambres',
-            // Ajoute ici les champs offer_type ou commission si tu décides de les utiliser plus tard
-            // 'x_studio_offer_type', 
+            'x_studio_commission'
         ],
-        offset,
+        (page - 1) * pageSize,
         pageSize,
         'create_date desc'
     ]) as any[];
 
-    // 3. Mapping : Champs Odoo (Studio) -> Champs App (TypeScript)
     const properties: Property[] = records.map((p: any) => ({
       id: p.id,
       name: p.name,
       price: p.list_price || 0,
-      
-      // Mapping des champs Studio vers nos noms internes
       type: p.x_studio_type || 'apartment', 
       address: p.x_studio_localisation_adresse_quartier || '', 
       city: p.x_studio_city || '', 
       surface: p.x_studio_surface_m || 0,
       bedrooms: p.x_studio_nb_chambres || 0,
-      
-      // Valeurs par défaut si le champ n'est pas encore dans Odoo
-      offerType: p.x_studio_offer_type || 'sale', 
-      commission: 0, 
       status: p.x_studio_statut || 'available',
+      offerType: p.x_studio_statut || 'À vendre', // Placeholder, adapte selon ton mapping
       
-      ownerId: undefined, // Tu as commenté le owner, donc on laisse undefined
-      ownerName: undefined,
+      commission: p.x_studio_commission || 0,
+      
+      // FIX ERREUR 2 : Maintenant accepté car ajouté dans l'interface
+      activeLeads: 0, 
 
-      // 4. Traitement de l'image
-      // Odoo retourne 'false' (booléen) s'il n'y a pas d'image, sinon le string base64
-      mainImage: p.image_512 
-        ? `data:image/png;base64,${p.image_512}` 
-        : undefined // Le composant UI gérera l'image par défaut
+      // Image via URL Odoo (plus performant que base64)
+      mainImage: `/api/image/product.template/${p.id}`,
     }));
 
     return { properties, totalCount, totalPages: Math.ceil(totalCount / pageSize) };
@@ -115,7 +100,7 @@ export async function getPropertyById(id: number): Promise<Property | null> {
             'x_studio_localisation_adresse_quartier',
             'x_studio_city',
             'x_studio_surface_m',
-            // 'x_studio_commission',
+            'x_studio_commission',
             'x_studio_statut',
             'x_studio_owner',
             'x_studio_nb_chambres',
@@ -132,9 +117,9 @@ export async function getPropertyById(id: number): Promise<Property | null> {
             type: p.x_studio_type || 'apartment',
             address: p.x_studio_localisation_adresse_quartier || '',
             city: p.x_studio_city || '',
-            offerType: p.x_studio_offer_type || 'sale',
             commission: p.x_studio_commission || 0,
             status: p.x_studio_statut || 'available',
+            offerType: p.x_studio_statut || 'À vendre',
             ownerId: p.x_re_owner_id ? p.x_re_owner_id[0] : undefined,
             ownerName: p.x_re_owner_id ? p.x_re_owner_id[1] : undefined,
             surface: p.x_studio_surface_m || 0,
@@ -151,30 +136,28 @@ export async function getPropertyById(id: number): Promise<Property | null> {
 
 // --- ÉCRITURE (UPSERT) ---
 
-export async function upsertProperty(data: Property) {
+export async function upsertProperty(data: any) {
   try {
     const odooPayload = {
       name: data.name,
       list_price: data.price,
-      // Custom Fields
       x_studio_type: data.type,
       x_studio_localisation_adresse_quartier: data.address,
       x_studio_city: data.city,
-      // x_studio_offer_type: data.offerType,
       x_studio_commission: data.commission,
-      x_studio_statut: data.offerType,
-      x_studio_owner: data.ownerId || false, // false pour null dans Odoo
-      x_studio_surface_m: data.surface,
-      x_studio_nb_chambres: data.bedrooms,
-      x_studio_nb_salons: data.salons,
-      x_studio_nb_cuisines: data.kitchens,
-      x_studio_nb_salle_de_bain: data.bathrooms,
-      x_studio_parking: data.parking,
-      x_studio_description: data.description,
-      x_studio_produit_immobilier: true, // Marque comme bien immobilier
       
-      // Flags standards
-      sale_ok: true, // On considère que c'est un produit vendable
+      // SOURCE DE VÉRITÉ UNIQUE POUR AGTS
+      x_studio_statut: data.x_studio_statut, 
+      
+      x_studio_owner: data.ownerId || false,
+      x_studio_surface_m: data.surface,
+      x_studio_nb_chambres: data.bedrooms || 0,
+      x_studio_nb_salons: data.salons || 0,
+      x_studio_nb_cuisines: data.kitchens || 0,
+      x_studio_nb_salle_de_bain: data.bathrooms || 0,
+      x_studio_description: data.description,
+      x_studio_produit_immobilier: true,
+      sale_ok: true,
     };
 
     let propertyId = data.id;
