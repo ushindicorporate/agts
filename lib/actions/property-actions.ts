@@ -236,3 +236,28 @@ export async function getPropertyLeads(propertyId: number) {
     return [];
   }
 }
+
+export async function getPropertiesByOwner(ownerId: number) {
+  try {
+    const domain = [
+      ['x_studio_produit_immobilier', '=', true],
+      ['x_studio_owner', '=', ownerId]
+    ];
+
+    const records = await odooCall('product.template', 'search_read', [
+      domain,
+      ['id', 'name', 'list_price', 'x_studio_statut', 'x_studio_type', 'image_128']
+    ]) as any[];
+
+    return records.map(p => ({
+      id: p.id,
+      name: p.name,
+      price: p.list_price,
+      status: p.x_studio_statut,
+      type: p.x_studio_type,
+      image: `/api/image/product.template/${p.id}`
+    }));
+  } catch (error) {
+    return [];
+  }
+}

@@ -113,9 +113,6 @@ export async function getContacts(
   typeFilter: string = '',
 ) {
   const offset = (page - 1) * pageSize;
-
-  console.log(page, search, roleFilter, typeFilter);
-  
   
   // Construction du Domaine Odoo (Filtres)
   const domain: any[] = [['customer_rank', '>', 0]]; // On ne veut que les clients
@@ -124,7 +121,7 @@ export async function getContacts(
     domain.push('|', ['name', 'ilike', search], ['email', 'ilike', search]);
   }
   if (roleFilter && roleFilter !== 'all') {
-    domain.push(['x_studio_role', '=', roleFilter]);
+    domain.push(['x_studio_role', 'ilike', roleFilter]);
   }
 
   if (typeFilter && typeFilter !== 'all') {

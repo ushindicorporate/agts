@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Plus, Search } from 'lucide-react';
+import { MessageSquare, MoreHorizontal, Phone, Plus, Search } from 'lucide-react';
 
 // Shadcn Components
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,6 @@ export default function ContactsTable({ data, pageCount, currentPage }: Contacts
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  // ... (Garde les fonctions handleSearch, handleRoleFilter, handlePageChange d'avant) ...
    const handleSearch = (term: string) => {
     const params = new URLSearchParams(searchParams);
     if (term) params.set('search', term); else params.delete('search');
@@ -83,7 +82,22 @@ export default function ContactsTable({ data, pageCount, currentPage }: Contacts
     },
     {
       accessorKey: 'phone',
-      header: 'Téléphone',
+      header: 'Contact',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">{row.original.phone}</span>
+            {row.original.phone !== '-' && (
+                <div className="flex gap-1">
+                    <a href={`tel:${row.original.phone}`} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-blue-600">
+                        <Phone className="h-3.5 w-3.5" />
+                    </a>
+                    <a href={`https://wa.me/${row.original.phone.replace(/\s/g, '')}`} target="_blank" className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors text-emerald-600">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                    </a>
+                </div>
+            )}
+        </div>
+      )
     },
     {
       accessorKey: 'source',

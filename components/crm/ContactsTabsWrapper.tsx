@@ -2,8 +2,9 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ContactsTable from './ContactsTable'; // Ton tableau existant
+import ContactsTable from './ContactsTable';
 import { REContact } from '@/lib/types/contact';
+import { Badge } from '../ui/badge';
 
 interface Props {
   contacts: REContact[];
@@ -34,28 +35,25 @@ export default function ContactsTabsWrapper({ contacts, pageCount, currentPage, 
       
       {/* ONGLETS DE NAVIGATION */}
       <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 overflow-x-auto">
-            <TabsTrigger value="all" className="py-2">
-                Tous <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.all}</span>
-            </TabsTrigger>
-            <TabsTrigger value="internal_agent" className="py-2">
-                Agents Internes <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.internal_agent}</span>
-            </TabsTrigger>
-            <TabsTrigger value="internal_agency" className="py-2">
-                Agences Internes <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.internal_agency}</span>
-            </TabsTrigger>
-            <TabsTrigger value="external_agent" className="py-2">
-                Agents Externes <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.external_agent}</span>
-            </TabsTrigger>
-            <TabsTrigger value="external_agency" className="py-2">
-                Agences Externes <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.external_agency}</span>
-            </TabsTrigger>
-            <TabsTrigger value="promoter" className="py-2">
-                Promoteurs <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.promoter}</span>
-            </TabsTrigger>
-            <TabsTrigger value="private" className="py-2">
-                Clients <span className="ml-2 text-xs bg-muted-foreground/20 px-1.5 rounded-full">{counts.private}</span>
-            </TabsTrigger>
+        <TabsList className="w-full justify-start h-auto p-1.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl overflow-x-auto flex-nowrap scrollbar-hide">
+            {[
+              { id: 'all', label: 'Tous', count: counts.all },
+              { id: 'internal_agent', label: 'Agents AGTS', count: counts.internal_agent },
+              { id: 'external_agent', label: 'Agents Externes', count: counts.external_agent },
+              { id: 'landlord', label: 'Propriétaires', count: counts.landlord },
+              { id: 'tenant', label: 'Locataires', count: counts.tenant },
+            ].map((tab) => (
+              <TabsTrigger 
+                key={tab.id} 
+                value={tab.id} 
+                className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm transition-all"
+              >
+                <span className="text-sm font-bold">{tab.label}</span>
+                <Badge variant="secondary" className="ml-2 bg-slate-200/50 dark:bg-slate-700/50 text-[10px] font-black border-none">
+                  {tab.count}
+                </Badge>
+              </TabsTrigger>
+            ))}
         </TabsList>
       </Tabs>
 
