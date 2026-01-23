@@ -1,4 +1,4 @@
-import { getOwnersList, getPropertyById } from '@/lib/actions/property-actions';
+import { getOwnersForFilter, getPropertyById } from '@/lib/actions/property-actions';
 import { notFound } from 'next/navigation';
 import EditPropertyClient from './client';
 
@@ -15,7 +15,7 @@ export default async function EditPropertyPage({ params }: PageProps) {
   // Chargement Parallèle
   const [property, owners] = await Promise.all([
     getPropertyById(propertyId),
-    getOwnersList()
+    getOwnersForFilter()
   ]);
 
   if (!property) return notFound();

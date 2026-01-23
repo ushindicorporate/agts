@@ -10,6 +10,9 @@ interface PropertyFilters {
     minPrice?: number;
     maxPrice?: number;
     minSurface?: number;
+    city?: string;
+    statuses?: string[];  // Nouveau : Tableau de statuts (ex: ['À louer', 'Réservé'])
+    ownerIds?: number[];  // Nouveau : Tableau d'IDs de propriétaires
 }
 
 // --- LECTURE ---
@@ -22,24 +25,31 @@ export async function getProperties(page = 1, pageSize = 9, filters: PropertyFil
     domain.push(['name', 'ilike', filters.search]);
   }
 
-  // 2. Type (Selection)
+  // 2. Type de bien
   if (filters.type && filters.type !== 'all') {
     domain.push(['x_studio_type', '=', filters.type]);
   }
 
-  // 3. Prix (Float)
-  if (filters.minPrice) {
-    domain.push(['list_price', '>=', filters.minPrice]);
-  }
-  if (filters.maxPrice) {
-    domain.push(['list_price', '<=', filters.maxPrice]);
+  // 3. Commune (City)
+  if (filters.city && filters.city !== 'all') {
+    domain.push(['x_studio_city', '=', filters.city]);
   }
 
-  // 4. Surface (Float - si le champ existe dans Odoo)
-  // Assure-toi que 'x_studio_surface' est bien le nom technique dans Odoo
-  if (filters.minSurface) {
-    domain.push(['x_studio_surface', '>=', filters.minSurface]);
+  // 4. FILTRE MULTI-STATUTS (x_studio_statut)
+  // Odoo utilise l'opérateur 'in' pour comparer avec un tableau de valeurs
+  if (filters.statuses && filters.statuses.length > 0) {
+    domain.push(['x_studio_statut', 'in', filters.statuses]);
   }
+
+  // 5. FILTRE MULTI-PROPRIÉTAIRES
+  if (filters.ownerIds && filters.ownerIds.length > 0) {
+    domain.push(['x_studio_owner', 'in', filters.ownerIds]);
+  }
+
+  // 6. Prix & Surface
+  if (filters.minPrice) domain.push(['list_price', '>=', filters.minPrice]);
+  if (filters.maxPrice) domain.push(['list_price', '<=', filters.maxPrice]);
+  if (filters.minSurface) domain.push(['x_studio_surface_m', '>=', filters.minSurface]);
 
   try {
     const totalCount = await odooCall('product.template', 'search_count', [domain]) as number;
@@ -50,39 +60,47 @@ export async function getProperties(page = 1, pageSize = 9, filters: PropertyFil
             'id', 'name', 'list_price', 
             'x_studio_type', 'x_studio_localisation_adresse_quartier', 
             'x_studio_city', 'x_studio_statut', 'x_studio_surface_m',
-            'x_studio_nb_chambres',
-            'x_studio_commission'
+            'x_studio_nb_chambres', 'x_studio_commission'
         ],
-        (page - 1) * pageSize,
+        offset,
         pageSize,
         'create_date desc'
     ]) as any[];
 
-    const properties: Property[] = records.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      price: p.list_price || 0,
-      type: p.x_studio_type || 'apartment', 
-      address: p.x_studio_localisation_adresse_quartier || '', 
-      city: p.x_studio_city || '', 
-      surface: p.x_studio_surface_m || 0,
-      bedrooms: p.x_studio_nb_chambres || 0,
-      status: p.x_studio_statut || 'available',
-      offerType: p.x_studio_statut || 'À vendre', // Placeholder, adapte selon ton mapping
+    const properties: Property[] = records.map((p: any) => {
+      // LOGIQUE DE MAPPING DU STATUT (Entreprise)
+      // On convertit le x_studio_statut d'Odoo vers les types techniques de ton App
+      const odooStatus = p.x_studio_statut || 'À louer';
       
-      commission: p.x_studio_commission || 0,
-      
-      // FIX ERREUR 2 : Maintenant accepté car ajouté dans l'interface
-      activeLeads: 0, 
+      let techStatus: Property['status'] = 'available';
+      if (odooStatus === 'Vendu') techStatus = 'sold';
+      if (odooStatus === 'Loué') techStatus = 'rented';
+      if (odooStatus === 'Réservé') techStatus = 'reserved';
 
-      // Image via URL Odoo (plus performant que base64)
-      mainImage: `/api/image/product.template/${p.id}`,
-    }));
+      return {
+        id: p.id,
+        name: p.name,
+        price: p.list_price || 0,
+        type: p.x_studio_type || 'apartment', 
+        address: p.x_studio_localisation_adresse_quartier || '', 
+        city: p.x_studio_city || '', 
+        surface: p.x_studio_surface_m || 0,
+        bedrooms: p.x_studio_nb_chambres || 0,
+        
+        // Mapping intelligent
+        status: techStatus, 
+        offerType: odooStatus as any, // 'À vendre' ou 'À louer'
+        
+        commission: p.x_studio_commission || 0,
+        activeLeads: 0, 
+        mainImage: `/api/image/product.template/${p.id}`,
+      };
+    });
 
     return { properties, totalCount, totalPages: Math.ceil(totalCount / pageSize) };
 
   } catch (error) {
-    console.error("Error fetching properties:", error);
+    console.error("Odoo Fetch Error:", error);
     return { properties: [], totalCount: 0, totalPages: 0 };
   }
 }
@@ -179,16 +197,21 @@ export async function upsertProperty(data: any) {
 
 // Helper pour récupérer la liste des propriétaires (Contacts) pour le select
 // On réutilise res.partner mais on filtre peut-être sur ceux qui sont "Propriétaires"
-export async function getOwnersList() {
-    try {
-        const owners = await odooCall('res.partner', 'search_read', [
-            [], // Tu pourrais filtrer [['x_re_role', '=', 'landlord']]
-            ['id', 'name']
-        ]) as any[];
-        return owners.map((o: any) => ({ id: o.id, name: o.name }));
-    } catch (e) {
-        return [];
-    }
+export async function getOwnersForFilter() {
+  try {
+    const owners = await odooCall('res.partner', 'search_read', [
+      [['x_studio_role', 'in', ['landlord', 'seller']]], // Filtre : a un rôle défini
+      ['id', 'name', 'x_studio_role']
+    ]) as any[];
+    
+    return owners.map(o => ({
+      id: o.id,
+      name: o.name,
+      role: o.x_studio_role
+    }));
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getPropertyLeads(propertyId: number) {

@@ -1,102 +1,146 @@
 'use client'
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Pour Vente/Location
-import { RotateCcw, MapPin, DollarSign, Home, Maximize } from 'lucide-react';
+import { RotateCcw, MapPin, DollarSign, Home, Users } from 'lucide-react';
+import MultipleSelector, { Option } from "@/components/ui/multiselect";
 
-// Liste des communes majeures de Kinshasa pour AGTS
+// Statuts convertis en options pour le Multi-Select
+const STATUS_OPTIONS: Option[] = [
+  { label: "🔵 À louer", value: "À louer" },
+  { label: "🟠 À vendre", value: "À vendre" },
+  { label: "⏳ Réservé", value: "Réservé" },
+  { label: "✅ Loué", value: "Loué" },
+  { label: "✅ Vendu", value: "Vendu" },
+];
+
 const COMMUNES_KINSHASA = [
   { value: 'all', label: 'Toutes les communes' },
   { value: 'Gombe', label: 'Gombe' },
-  { value: 'Ngaliema', label: 'Ngaliema (Binza/Ma Campagne)' },
+  { value: 'Ngaliema', label: 'Ngaliema' },
   { value: 'Limete', label: 'Limete' },
   { value: 'Kintambo', label: 'Kintambo' },
   { value: 'Mont-Ngafula', label: 'Mont-Ngafula' },
-  { value: 'Lingwala', label: 'Lingwala' },
-  { value: 'Barumbu', label: 'Barumbu' },
 ];
 
-export default function PropertyFilters() {
+interface PropertyFiltersProps {
+  owners: { id: number; name: string; role: string }[];
+}
+
+export default function PropertyFilters({ owners }: PropertyFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+
+  // Mapping des propriétaires Odoo pour le Multi-Select
+  const ownerOptions: Option[] = useMemo(() => 
+    owners.map(o => ({
+      label: `${o.name} (${o.role})`,
+      value: o.id.toString()
+    })), [owners]);
+
+  // États locaux (Tableaux d'options pour les multi-selects)
+  const [selectedStatuses, setSelectedStatuses] = useState<Option[]>([]);
+  const [selectedOwners, setSelectedOwners] = useState<Option[]>([]);
   
-  // États locaux synchronisés avec l'URL
-  const [offerType, setOfferType] = useState(searchParams.get('offerType') || 'all');
-  const [type, setType] = useState(searchParams.get('type') || 'all');
+  // Autres filtres
   const [city, setCity] = useState(searchParams.get('city') || 'all');
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
-  const [minSurface, setMinSurface] = useState(searchParams.get('minSurface') || '');
+
+  // Synchronisation initiale avec l'URL (Deep Linking)
+  useEffect(() => {
+    const statusesFromUrl = searchParams.get('statuses')?.split(',') || [];
+    setSelectedStatuses(STATUS_OPTIONS.filter(opt => statusesFromUrl.includes(opt.value)));
+
+    const ownersFromUrl = searchParams.get('ownerIds')?.split(',') || [];
+    setSelectedOwners(ownerOptions.filter(opt => ownersFromUrl.includes(opt.value)));
+  }, [searchParams, ownerOptions]);
 
   const applyFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
     
-    // Helper pour mettre à jour les params
-    const updateParam = (key: string, value: string) => {
-      if (value && value !== 'all') params.set(key, value);
-      else params.delete(key);
-    };
+    // Statuts
+    if (selectedStatuses.length > 0) {
+      params.set('statuses', selectedStatuses.map(s => s.value).join(','));
+    } else {
+      params.delete('statuses');
+    }
 
-    updateParam('offerType', offerType);
-    updateParam('type', type);
-    updateParam('city', city);
-    updateParam('minPrice', minPrice);
-    updateParam('maxPrice', maxPrice);
-    updateParam('minSurface', minSurface);
+    // Propriétaires
+    if (selectedOwners.length > 0) {
+      params.set('ownerIds', selectedOwners.map(o => o.value).join(','));
+    } else {
+      params.delete('ownerIds');
+    }
+
+    // Autres
+    if (city && city !== 'all') params.set('city', city); else params.delete('city');
+    if (minPrice) params.set('minPrice', minPrice); else params.delete('minPrice');
+    if (maxPrice) params.set('maxPrice', maxPrice); else params.delete('maxPrice');
     
     params.set('page', '1');
     router.push(`${pathname}?${params.toString()}`);
   };
 
   const resetFilters = () => {
-    setOfferType('all');
-    setType('all');
+    setSelectedStatuses([]);
+    setSelectedOwners([]);
     setCity('all');
     setMinPrice('');
     setMaxPrice('');
-    setMinSurface('');
     router.push(pathname);
   };
 
   return (
-    <div className="space-y-6 bg-white dark:bg-slate-900 p-5 rounded-2xl border shadow-sm h-fit">
+    <div className="space-y-6 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm h-fit transition-colors">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
           Filtres Avancés
         </h3>
-        <Button onClick={resetFilters} variant="ghost" size="sm" className="h-8 text-xs text-slate-500">
-          <RotateCcw className="mr-1 h-3 w-3" /> Effacer
+        <Button onClick={resetFilters} variant="ghost" size="sm" className="h-8 text-xs text-slate-500 hover:text-red-500">
+          <RotateCcw className="mr-1 h-3 w-3" /> Reset
         </Button>
       </div>
 
-      {/* 1. Type d'offre (Vente / Location) */}
+      {/* MULTI-SELECT STATUTS */}
       <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-slate-400">Transaction</Label>
-        <Tabs value={offerType} onValueChange={setOfferType} className="w-full">
-          <TabsList className="grid grid-cols-3 w-full bg-slate-100">
-            <TabsTrigger value="all" className="text-xs">Tous</TabsTrigger>
-            <TabsTrigger value="À louer" className="text-xs">Location</TabsTrigger>
-            <TabsTrigger value="À vendre" className="text-xs">Vente</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Statuts</Label>
+        <MultipleSelector
+          value={selectedStatuses}
+          onChange={setSelectedStatuses}
+          defaultOptions={STATUS_OPTIONS}
+          placeholder="Filtrer par statut..."
+          emptyIndicator={<p className="text-center text-xs text-slate-500">Aucun statut trouvé</p>}
+          className="dark:bg-slate-800 border-none rounded-xl"
+        />
       </div>
 
-      {/* 2. Commune de Kinshasa */}
+      {/* MULTI-SELECT PROPRIÉTAIRES */}
       <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-slate-400 flex items-center gap-1">
-          <MapPin className="h-3 w-3" /> Commune
-        </Label>
+        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Propriétaires (Landlords/Sellers)</Label>
+        <MultipleSelector
+          value={selectedOwners}
+          onChange={setSelectedOwners}
+          defaultOptions={ownerOptions}
+          placeholder="Rechercher un propriétaire..."
+          emptyIndicator={<p className="text-center text-xs text-slate-500">Aucun contact trouvé</p>}
+          className="dark:bg-slate-800 border-none rounded-xl"
+        />
+      </div>
+
+      {/* COMMUNE */}
+      <div className="space-y-2">
+        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Commune de Kinshasa</Label>
         <Select value={city} onValueChange={setCity}>
-          <SelectTrigger className="bg-slate-50 border-none">
-            <SelectValue placeholder="Choisir une commune" />
+          <SelectTrigger className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl">
+            <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="dark:bg-slate-900 border-slate-800">
             {COMMUNES_KINSHASA.map((c) => (
               <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
             ))}
@@ -104,58 +148,28 @@ export default function PropertyFilters() {
         </Select>
       </div>
 
-      {/* 3. Type de bien */}
+      {/* BUDGET */}
       <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-slate-400 flex items-center gap-1">
-          <Home className="h-3 w-3" /> Type de bien
-        </Label>
-        <Select value={type} onValueChange={setType}>
-          <SelectTrigger className="bg-slate-50 border-none">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les types</SelectItem>
-            <SelectItem value="apartment">Appartement</SelectItem>
-            <SelectItem value="villa">Villa / Maison</SelectItem>
-            <SelectItem value="land">Terrain / Concession</SelectItem>
-            <SelectItem value="commercial">Bureau / Commerce</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* 4. Budget (En USD car c'est la norme à Kin) */}
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-slate-400 flex items-center gap-1">
-          <DollarSign className="h-3 w-3" /> Budget (USD)
-        </Label>
+        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Budget (USD)</Label>
         <div className="grid grid-cols-2 gap-2">
           <Input 
             type="number" placeholder="Min" 
-            className="bg-slate-50 border-none"
+            className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl"
             value={minPrice} onChange={(e) => setMinPrice(e.target.value)} 
           />
           <Input 
             type="number" placeholder="Max" 
-            className="bg-slate-50 border-none"
+            className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl"
             value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} 
           />
         </div>
       </div>
 
-      {/* 5. Surface */}
-      <div className="space-y-2">
-        <Label className="text-xs font-semibold uppercase text-slate-400 flex items-center gap-1">
-          <Maximize className="h-3 w-3" /> Surface (m²)
-        </Label>
-        <Input 
-          type="number" placeholder="Surface min" 
-          className="bg-slate-50 border-none"
-          value={minSurface} onChange={(e) => setMinSurface(e.target.value)} 
-        />
-      </div>
-
-      <Button onClick={applyFilters} className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-6 shadow-lg shadow-slate-200 transition-all active:scale-[0.98]">
-        Afficher les résultats
+      <Button 
+        onClick={applyFilters} 
+        className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl py-6 shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] font-bold"
+      >
+        Appliquer les filtres
       </Button>
     </div>
   );
