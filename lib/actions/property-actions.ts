@@ -173,10 +173,10 @@ export async function upsertProperty(data: any) {
       x_studio_owner: data.ownerId || false,
       x_studio_surface_m: data.surface,
       x_studio_nb_chambres: data.bedrooms || 0,
-      x_studio_nb_salons: data.salons || 0,
+      x_studio_salons: data.salons || 0,
       x_studio_nb_cuisines: data.kitchens || 0,
       x_studio_nb_salle_de_bain: data.bathrooms || 0,
-      x_studio_description: data.description,
+      x_studio_description_1: data.description,
       x_studio_produit_immobilier: true,
       sale_ok: true,
     };
@@ -203,7 +203,9 @@ export async function upsertProperty(data: any) {
 export async function getOwnersForFilter() {
   try {
     const owners = await odooCall('res.partner', 'search_read', [
-      [['x_studio_role', 'in', ['landlord', 'seller']]], // Filtre : a un rôle défini
+      [
+        // ['x_studio_role', 'in', ['landlord', 'seller']]
+      ], // Filtre : a un rôle défini
       ['id', 'name', 'x_studio_role']
     ]) as any[];
     

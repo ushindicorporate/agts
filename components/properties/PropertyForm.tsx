@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,11 +20,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Property } from '@/lib/types/property';
 import { upsertProperty } from '@/lib/actions/property-actions';
-import { cn } from '@/lib/utils';
+import MultipleSelector from '../ui/multiselect';
 
 // --- SCHÉMA DE VALIDATION (Strict Odoo) ---
 const formSchema = z.object({
@@ -73,6 +71,12 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
     } as any
   });
 
+  const ownerOptions = useMemo(() => 
+    ownersList.map(o => ({
+        label: o.name,
+        value: o.id.toString()
+    })), [ownersList]);
+
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     const result = await upsertProperty(values);
@@ -80,7 +84,7 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
 
     if (result.success) {
       toast.success(propertyId ? "Mise à jour réussie" : "Bien créé avec succès", {
-        description: "Les données sont synchronisées avec Odoo AGTS."
+        description: "Vous pouvez maintenant ajouter des photos au mandat."
       });
       if (onSuccess && result.id) onSuccess(result.id);
     } else {
@@ -88,11 +92,21 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
     }
   }
 
-  const handleNewOwnerAdded = (newContact: { id: number, name: string }) => {
-      setOwnersList((prev) => [...prev, newContact]);
-      form.setValue('ownerId', newContact.id);
-      toast.success("Nouveau propriétaire ajouté et sélectionné");
-  };
+    const handleNewOwnerAdded = (newContact: { id: number, name: string }) => {
+        // 1. Ajouter à la liste pour que MultipleSelector le trouve
+        setOwnersList((prev) => [...prev, newContact]);
+        
+        // 2. Sélectionner la valeur (le composant réagira grâce au filtre dans 'value')
+        form.setValue('ownerId', newContact.id, { shouldValidate: true });
+        
+        toast.success(`${newContact.name} a été lié au mandat.`);
+    };
+
+    const handleSearchOwners = async (query: string) => {
+        return ownerOptions.filter(option => 
+            option.label.toLowerCase().includes(query.toLowerCase())
+        );
+    };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pb-24 lg:pb-10">
@@ -211,26 +225,46 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                             control={form.control}
                             name="ownerId"
                             render={({ field }) => (
-                            <FormItem>
+                                <FormItem>
                                 <div className="flex items-center justify-between mb-2">
-                                    <FormLabel>Propriétaire Mandant</FormLabel>
+                                    <FormLabel className="dark:text-slate-300 font-bold">Propriétaire Mandant</FormLabel>
                                     <QuickContactDialog onSuccess={handleNewOwnerAdded} />
                                 </div>
-                                <Select 
-                                    onValueChange={(val) => field.onChange(Number(val))} 
-                                    value={field.value?.toString()}
-                                >
-                                    <FormControl><SelectTrigger className="dark:bg-slate-800"><SelectValue placeholder="Rechercher un contact..." /></SelectTrigger></FormControl>
-                                    <SelectContent>
-                                        {ownersList.map(owner => (
-                                            <SelectItem key={owner.id} value={owner.id.toString()}>{owner.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </FormItem>
+                                
+                                <FormControl>
+                                    <MultipleSelector
+                                    {...field}
+                                    // On passe l'option actuellement sélectionnée
+                                    value={ownerOptions.filter(opt => opt.value === field.value?.toString())}
+                                    
+                                    // On utilise onSearch pour forcer le filtrage quand on tape
+                                    onSearch={handleSearchOwners}
+                                    
+                                    // On garde les options par défaut pour l'affichage initial (clic sans taper)
+                                    defaultOptions={ownerOptions}
+                                    
+                                    onChange={(options) => {
+                                        const lastSelected = options[options.length - 1];
+                                        field.onChange(lastSelected ? Number(lastSelected.value) : undefined);
+                                    }}
+                                    
+                                    placeholder="Taper un nom (ex: John...)"
+                                    maxSelected={1}
+                                    hidePlaceholderWhenSelected
+                                    loadingIndicator={
+                                        <p className="py-2 text-center text-xs text-slate-400 animate-pulse">Recherche...</p>
+                                    }
+                                    emptyIndicator={
+                                        <p className="py-2 text-center text-xs text-slate-500">Aucun contact trouvé.</p>
+                                    }
+                                    className="rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
                             )}
-                        />
-                    </div>
+                            />
+                        </div>
                 </CardContent>
             </Card>
 
@@ -346,7 +380,7 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                         name="description"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Description détaillée (Odoo)</FormLabel>
+                            <FormLabel>Description détaillée</FormLabel>
                             <FormControl>
                                 <Textarea 
                                     rows={4} 
@@ -373,7 +407,7 @@ export default function PropertyForm({ initialData, owners, onSuccess }: Propert
                     ) : (
                         <Save className="mr-2 h-5 w-5" />
                     )}
-                    {propertyId ? 'Mettre à jour sur Odoo' : 'Créer le mandat'}
+                    {propertyId ? 'Mettre à jour' : 'Créer le mandat'}
                 </Button>
             </div>
 
