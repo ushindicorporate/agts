@@ -2,7 +2,7 @@
 
 export type PropertyType = 'apartment' | 'villa' | 'land' | 'commercial';
 // J'ajoute les types exacts que tu as dans ton mapping pour éviter les erreurs de cast
-export type OfferType = 'À vendre' | 'À louer' | 'sale' | 'rent'; 
+export type OfferType = 'À vendre' | 'À louer' | 'sale' | 'Loué'; 
 export type PropertyStatus = 'available' | 'reserved' | 'rented' | 'sold';
 
 export interface Property {

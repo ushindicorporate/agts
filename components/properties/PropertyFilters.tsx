@@ -134,7 +134,7 @@ export default function PropertyFilters({ owners }: PropertyFiltersProps) {
       </div>
 
       {/* COMMUNE */}
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Commune de Kinshasa</Label>
         <Select value={city} onValueChange={setCity}>
           <SelectTrigger className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl">
@@ -146,7 +146,7 @@ export default function PropertyFilters({ owners }: PropertyFiltersProps) {
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </div> */}
 
       {/* BUDGET */}
       <div className="space-y-2">

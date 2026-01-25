@@ -5,7 +5,6 @@ import {
   Home, 
   LayoutGrid, 
   Building2, 
-  Zap,
   LayoutList
 } from "lucide-react";
 
@@ -21,6 +20,8 @@ import PropertyFilters from "@/components/properties/PropertyFilters";
 import PropertySearch from "@/components/properties/PropertySearch";
 import { PropertySkeleton } from "@/components/properties/PropertySkeleton";
 import PropertyCard from "@/components/properties/PropertyCard";
+import { ViewToggle } from "@/components/properties/ViewToggle";
+import { PropertyTable } from "@/components/properties/PropertyTable";
 
 // --- INTERFACE DES PARAMS ---
 interface SearchParams {
@@ -32,6 +33,7 @@ interface SearchParams {
   city?: string;
   statuses?: string;
   ownerIds?: string;
+  view?: string;
 }
 
 export default async function PropertiesListPage({
@@ -97,14 +99,7 @@ export default async function PropertiesListPage({
                 <div className="w-full">
                     <PropertySearch defaultValue={searchQuery} />
                 </div>
-                <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-white dark:bg-slate-700 shadow-sm">
-                        <LayoutGrid className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400">
-                        <LayoutList className="h-4 w-4" />
-                    </Button>
-                </div>
+                <ViewToggle />
             </div>
 
             {/* GRILLE DE RÉSULTATS AVEC CHARGEMENT PROGRESSIF (SUSPENSE) */}
@@ -113,7 +108,7 @@ export default async function PropertiesListPage({
               key={JSON.stringify(params)} 
               fallback={<PropertySkeleton />}
             >
-                <PropertiesGridData searchParams={params} />
+                <PropertiesContent searchParams={params} />
             </Suspense>
 
         </div>
@@ -123,8 +118,9 @@ export default async function PropertiesListPage({
 }
 
 // --- COMPOSANT ASYNCHRONE DE DONNÉES ---
-async function PropertiesGridData({ searchParams }: { searchParams: SearchParams }) {
+async function PropertiesContent({ searchParams }: { searchParams: SearchParams }) {
   const page = parseInt(searchParams.page || "1");
+  const view = searchParams.view || 'grid';
   
   // Mapping des filtres pour l'action Odoo
   const filters = {
@@ -140,32 +136,18 @@ async function PropertiesGridData({ searchParams }: { searchParams: SearchParams
   const { properties, totalPages, totalCount } = await getProperties(page, 9, filters);
 
   if (properties.length === 0) {
-    return (
-        <div className="flex flex-col items-center justify-center py-32 border-2 border-dashed rounded-[40px] bg-slate-50/50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-800">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm mb-4">
-                <Home className="h-12 w-12 text-slate-200 dark:text-slate-700" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Aucun mandat trouvé</h3>
-            <p className="text-sm text-slate-500 text-center max-w-xs mt-2 px-6">
-                Aucun bien ne correspond à vos critères actuels. Essayez d'élargir votre recherche ou vos filtres.
-            </p>
-            <Link href="/dashboard/properties">
-                <Button variant="link" className="mt-4 text-primary font-black uppercase text-xs tracking-widest">
-                    Réinitialiser les filtres
-                </Button>
-            </Link>
-        </div>
-    );
+    return <EmptyState />;
   }
 
   return (
     <div className="space-y-10">
-      {/* GRILLE */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {properties.map((property) => (
-          <PropertyCard key={property.id} property={property} />
-        ))}
-      </div>
+      {view === 'grid' ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
+          {properties.map((p) => <PropertyCard key={p.id} property={p} />)}
+        </div>
+      ) : (
+        <PropertyTable properties={properties} />
+      )}
 
       {/* PAGINATION */}
       {totalPages > 1 && (
@@ -190,5 +172,24 @@ async function PropertiesGridData({ searchParams }: { searchParams: SearchParams
         </div>
       )}
     </div>
+  );
+}
+
+const EmptyState = () => {
+  return (
+      <div className="flex flex-col items-center justify-center py-32 border-2 border-dashed rounded-[40px] bg-slate-50/50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm mb-4">
+              <Home className="h-12 w-12 text-slate-200 dark:text-slate-700" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Aucun mandat trouvé</h3>
+          <p className="text-sm text-slate-500 text-center max-w-xs mt-2 px-6">
+              Aucun bien ne correspond à vos critères actuels. Essayez d'élargir votre recherche ou vos filtres.
+          </p>
+          <Link href="/dashboard/properties">
+              <Button variant="link" className="mt-4 text-primary font-black uppercase text-xs tracking-widest">
+                  Réinitialiser les filtres
+              </Button>
+          </Link>
+      </div>
   );
 }

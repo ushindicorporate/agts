@@ -60,7 +60,8 @@ export async function getProperties(page = 1, pageSize = 9, filters: PropertyFil
             'id', 'name', 'list_price', 
             'x_studio_type', 'x_studio_localisation_adresse_quartier', 
             'x_studio_city', 'x_studio_statut', 'x_studio_surface_m',
-            'x_studio_nb_chambres', 'x_studio_commission'
+            'x_studio_nb_chambres', 'x_studio_commission', 'x_studio_owner',
+            'x_studio_nb_salle_de_bain',
         ],
         offset,
         pageSize,
@@ -94,6 +95,8 @@ export async function getProperties(page = 1, pageSize = 9, filters: PropertyFil
         commission: p.x_studio_commission || 0,
         activeLeads: 0, 
         mainImage: `/api/image/product.template/${p.id}`,
+        ownerId: p.x_studio_owner ? p.x_studio_owner[0] : undefined,
+        ownerName: p.x_studio_owner ? p.x_studio_owner[1] : undefined,
       };
     });
 
