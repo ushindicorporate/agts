@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation";
-import { UserNav } from "@/components/Layout/UserNav"; // Import du nouveau composant
+import { UserNav } from "@/components/Layout/UserNav";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarContent } from "@/components/Layout/SidebarContent";
 import { MobileNav } from "@/components/Layout/MobileNav";
-import { Search } from "lucide-react";
 import { Breadcrumbs } from "@/components/Layout/Breadcrumbs";
 import { SearchTrigger } from "@/components/Layout/SearchTrigger";
-import { CommandSearch } from "@/components/Layout/CommandSearch";
 import { ModeToggle } from "@/components/Layout/ModeToggle";
+import { cn } from "@/lib/utils";
 
 export default async function DashboardLayout({
   children,
@@ -18,9 +17,8 @@ export default async function DashboardLayout({
 
   // 1. Vérif session
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) {
-    return redirect("/login");
+    return redirect("/");
   }
 
   // 2. Récupération données profil
@@ -30,7 +28,6 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single();
 
-  // 3. Préparation des données pour l'affichage
   const displayName = profile?.full_name || user.email?.split('@')[0] || "Agent";
   const displayEmail = profile?.email || user.email || "";
   
@@ -42,40 +39,57 @@ export default async function DashboardLayout({
     .toUpperCase();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Sidebar Fixe */}
-      <aside className="hidden md:block w-72 h-full border-r bg-white inset-y-0 z-80">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      
+      {/* SIDEBAR : Fixe sur Desktop, Cachée sur Mobile */}
+      <aside className="hidden lg:block w-72 h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-50">
         <SidebarContent />
       </aside>
 
-      {/* Zone Principale */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      {/* ZONE PRINCIPALE */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
-        {/* Header Interne */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b bg-white dark:bg-slate-900 px-8 shadow-sm z-10">
-          <div className="flex items-center gap-6">
-            <MobileNav />
+        {/* HEADER : Adaptatif Mobile/Desktop */}
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 md:px-8 shadow-sm z-40">
+          
+          {/* Gauche : Navigation & Recherche */}
+          <div className="flex items-center gap-2 md:gap-6">
+            <MobileNav /> {/* Hamburger menu sur mobile */}
+            
+            {/* On cache les breadcrumbs sur mobile très petit */}
+            <div className="hidden sm:block">
+              <Breadcrumbs />
+            </div>
+
+            {/* La barre de recherche se réduit sur mobile via SearchTrigger interne */}
             <SearchTrigger /> 
-            <Breadcrumbs />
           </div>
           
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* INDICATEUR ODOO (Optionnel ici) */}
+          {/* Droite : Outils & Profil */}
+          <div className="flex items-center gap-1 sm:gap-4">
+            
+            {/* Status de synchro (Point uniquement sur mobile) */}
             {profile?.odoo_partner_id && (
-              <div className="hidden sm:flex h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Synchronisé Odoo" />
+              <div className="flex items-center">
+                 <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" title="Système synchronisé"></span>
+                 </span>
+              </div>
             )}
 
-            {/* LE SWITCHER DE THÈME */}
             <ModeToggle />
 
-            <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block" />
+            {/* Séparateur vertical */}
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden xs:block" />
 
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden lg:block">
-                <p className="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">
+            <div className="flex items-center gap-3">
+              {/* Infos texte : Uniquement sur Large Desktop pour éviter l'encombrement */}
+              <div className="text-right hidden xl:block">
+                <p className="text-sm font-black text-slate-900 dark:text-white leading-none mb-1 truncate max-w-[150px]">
                   {displayName}
                 </p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-tighter">
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
                   Agent AGTS
                 </p>
               </div>
@@ -89,12 +103,17 @@ export default async function DashboardLayout({
             </div>
           </div>
         </header>
-        {/* <CommandSearch /> */}
 
-        {/* Contenu de la page */}
-        <div className="flex-1 overflow-y-auto p-8">
-          {children}
+        {/* CONTENU DE LA PAGE : Scrollable avec padding adaptatif */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 bg-slate-50/50 dark:bg-slate-950 transition-colors">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </div>
+
+        {/* OPTIONNEL : Barre de navigation mobile basse (si tu veux un look App) */}
+        {/* <div className="lg:hidden h-16 border-t bg-white dark:bg-slate-900 flex items-center justify-around"> ... </div> */}
+
       </main>
     </div>
   );

@@ -124,3 +124,26 @@ export async function setLeadState(id: number, action: 'mark_won' | 'mark_lost')
         return { success: false, error: e.message };
     }
 }
+
+export async function createLeadAction(data: any) {
+  try {
+    const payload = {
+      name: data.name,
+      partner_id: data.partner_id,
+      expected_revenue: data.expected_revenue,
+      priority: data.priority,
+      description: data.description || '',
+      type: 'opportunity', // Force le mode opportunité (Kanban)
+      // Si un bien est lié via Studio (ex: x_studio_bien)
+      x_studio_bien: data.property_id || false 
+    };
+
+    const leadId = await odooCall('crm.lead', 'create', [[payload]]);
+    
+    revalidatePath('/dashboard/leads');
+    return { success: true, id: leadId };
+  } catch (error: any) {
+    console.error("Odoo Lead Error:", error);
+    return { success: false, error: error.message };
+  }
+}

@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { CRMStage } from '@/lib/types/crm';
 import { deleteStage, renameStage } from '@/lib/actions/pipeline-settings';
 import { formatCurrency } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 // --- AJOUT DE weightedRevenue ---
 interface StageColumnHeaderProps {
@@ -84,14 +85,25 @@ export default function StageColumnHeader({ stage, count, revenue, weightedReven
       
       {/* LIGNE 1 : TITRE + MENU */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="font-bold text-gray-700 truncate text-sm" title={stage.name}>
-            {stage.name}
-          </span>
-          <span className="bg-gray-200 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
-            {count}
-          </span>
-        </div>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+              <span className="font-black text-slate-900 dark:text-white uppercase text-xs tracking-widest">
+                  {stage.name}
+              </span>
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-black rounded-md">
+                  {count}
+              </Badge>
+          </div>
+          
+          <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-lg font-black text-slate-900 dark:text-white">
+                  {formatCurrency(revenue)}
+              </span>
+              <span className="text-[10px] font-bold text-slate-400">
+                  (Pondéré: {formatCurrency(weightedRevenue)})
+              </span>
+          </div>
+      </div>
 
         {/* MENU */}
         <DropdownMenu>

@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import ActivityTimeline from '@/components/crm/ActivityTimeline';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, DollarSign, User } from 'lucide-react';
+import { Loader2, DollarSign, User, ArrowRight } from 'lucide-react';
 import { getLeadById } from '@/lib/actions/pipeline-actions';
 import { getActivityHistory } from '@/lib/actions/crm-actions';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface LeadDrawerProps {
   leadId: number | null;
@@ -43,10 +45,21 @@ export default function LeadDrawer({ leadId, open, onClose }: LeadDrawerProps) {
         ) : (
             <div className="space-y-6">
                 <SheetHeader>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <Badge variant="outline" className="rounded-md uppercase text-[10px] font-bold border-slate-200">
+                          {data.lead.stageName}
+                      </Badge>
+                      {/* LIEN VERS LA PAGE DÉTAILS */}
+                      <Link href={`/dashboard/leads/${data.lead.id}`} onClick={onClose}>
+                          <Button variant="ghost" size="sm" className="h-7 text-[10px] font-black uppercase text-primary gap-1 px-2">
+                              Voir la fiche complète <ArrowRight className="h-3 w-3" />
+                          </Button>
+                      </Link>
+                  </div>
+                    {/* <div className="flex items-center gap-2 mb-1">
                         <Badge variant="outline">{data.lead.stageName}</Badge>
                         <span className="text-xs text-muted-foreground">Créé le {new Date(data.lead.createDate).toLocaleDateString()}</span>
-                    </div>
+                    </div> */}
                     <SheetTitle className="text-xl">{data.lead.name}</SheetTitle>
                     <SheetDescription className="flex items-center gap-4 pt-2">
                         <span className="flex items-center gap-1 text-green-600 font-bold">

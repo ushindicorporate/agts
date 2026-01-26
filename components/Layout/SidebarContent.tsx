@@ -6,18 +6,19 @@ import {
   LayoutDashboard, 
   Users, 
   Building2, 
-  FileText, // Pour les offres plus tard
+  FileText, 
   Settings, 
   TrendingUp,
   ListTodo,
-  Trophy,
   Banknote,
   FolderOpen,
   BarChart3,
   Car,
-  Wrench
+  Wrench,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signOutAction } from "@/lib/actions/auth-actions";
 
 const menuGroups = [
   {
@@ -57,39 +58,84 @@ export function SidebarContent() {
   const pathname = usePathname();
 
   return (
-    <div className="space-y-4 py-4 flex flex-col h-full bg-white text-gray-900 overflow-y-auto">
-      <div className="px-3 py-2 flex-1">
-        <Link href="/dashboard" className="flex items-center pl-3 mb-10">
-          <div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold mr-3 shadow-lg">
+    <div className="space-y-4 py-4 flex flex-col h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 transition-colors duration-300">
+      <div className="px-6 py-2 flex-1 overflow-y-auto scrollbar-none">
+        
+        {/* LOGO & BRANDING */}
+        <Link href="/dashboard" className="flex items-center mb-10 group">
+          <div className="h-9 w-9 bg-slate-900 dark:bg-primary rounded-xl flex items-center justify-center text-white font-black shadow-lg group-hover:scale-105 transition-transform duration-200">
             AG
           </div>
-          <span className="text-xl font-bold tracking-tight">AGTS <span className="text-[10px] font-light bg-slate-100 px-1 rounded">PRO</span></span>
+          <div className="ml-3 flex flex-col">
+            <span className="text-xl font-black tracking-tighter leading-none dark:text-white">
+                AGTS
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
+                Système Pro
+            </span>
+          </div>
         </Link>
 
+        {/* NAVIGATION GROUPS */}
         {menuGroups.map((group) => (
-          <div key={group.group} className="mb-6">
-            <h3 className="px-4 mb-2 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+          <div key={group.group} className="mb-8">
+            <h3 className="px-2 mb-3 text-[10px] uppercase font-black tracking-[0.2em] text-slate-400 dark:text-slate-500">
               {group.group}
             </h3>
             <div className="space-y-1">
-              {group.routes.map((route) => (
-                <Link
-                  key={route.href}
-                  href={route.href}
-                  className={cn(
-                    "text-sm group flex p-2.5 w-full justify-start font-medium rounded-xl transition-all duration-200",
-                    pathname === route.href 
-                      ? "text-slate-900 bg-slate-100 shadow-sm" 
-                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                  )}
-                >
-                  <route.icon className={cn("h-5 w-5 mr-3 transition-colors", route.color)} />
-                  {route.label}
-                </Link>
-              ))}
+              {group.routes.map((route) => {
+                const isActive = pathname === route.href;
+                return (
+                  <Link
+                    key={route.href}
+                    href={route.href}
+                    className={cn(
+                      "text-sm group flex p-2.5 w-full justify-start font-bold rounded-xl transition-all duration-200 relative overflow-hidden",
+                      isActive 
+                        ? "text-primary bg-primary/5 dark:bg-primary/10 shadow-[inset_0_0_0_1px_rgba(var(--primary),0.1)]" 
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    )}
+                  >
+                    {/* Indicateur actif vertical */}
+                    {isActive && (
+                        <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-primary rounded-full" />
+                    )}
+
+                    <div className="flex items-center flex-1">
+                      <route.icon className={cn(
+                        "h-5 w-5 mr-3 transition-colors duration-200", 
+                        isActive ? route.color : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                      )} />
+                      {route.label}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         ))}
+      </div>
+
+      {/* FOOTER SIDEBAR (Paramètres & Déconnexion) */}
+      <div className="px-4 py-4 mt-auto border-t border-slate-100 dark:border-slate-800 space-y-1">
+         <Link
+            href="/dashboard/settings"
+            className={cn(
+                "text-sm group flex p-2.5 w-full justify-start font-bold rounded-xl transition-all text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50",
+                pathname === "/dashboard/settings" && "text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800"
+            )}
+         >
+            <Settings className="h-5 w-5 mr-3 text-slate-400" />
+            Paramètres
+         </Link>
+         
+         <button
+            onClick={() => signOutAction()}
+            className="text-sm group flex p-2.5 w-full justify-start font-bold rounded-xl transition-all text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+         >
+            <LogOut className="h-5 w-5 mr-3 text-rose-400" />
+            Déconnexion
+         </button>
       </div>
     </div>
   );
