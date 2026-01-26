@@ -15,7 +15,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
 import ActivityTimeline from '@/components/crm/ActivityTimeline';
-import { TagsManager } from '@/components/crm/TagsManager';
 import QuickTaskDialog from '@/components/tasks/QuickTaskDialog';
 import { getAllTags, getContactById, getContactHistory } from '@/lib/actions/crm-actions';
 import { getPropertiesByOwner } from '@/lib/actions/property-actions'; // Importé
@@ -153,8 +152,8 @@ export default async function ContactDetailsPage({ params }: { params: Promise<{
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <BudgetBox label="Budget Min" value={contact.budgetMin} />
-                    <BudgetBox label="Budget Max" value={contact.budgetMax} />
+                    <BudgetBox label="Budget Min" value={contact.budgetMin || 0} />
+                    <BudgetBox label="Budget Max" value={contact.budgetMax || 0} />
                 </div>
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Zone de recherche</p>

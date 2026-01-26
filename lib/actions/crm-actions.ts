@@ -4,67 +4,36 @@ import { revalidatePath } from 'next/cache';
 import { REContact } from '../types/contact';
 import { odooCall } from '../odoo-client';
 
-/**
- * Crée ou met à jour un contact (Partner) dans Odoo
- */
-export async function upsertContact(data: REContact) {
+export async function upsertContact(data: any) {
   try {
-    // 1. Transformation des données : Frontend (CamelCase) -> Odoo (Snake_case)
     const odooPayload = {
       name: data.name,
       email: data.email,
       phone: data.phone,
-      comment: data.notes || '', // Odoo n'aime parfois pas null
-      // Custom fields (Assure-toi qu'ils existent dans Odoo)
+      comment: data.notes || '',
+      is_company: data.isCompany, // Crucial : True si c'est une entreprise
+      parent_id: data.parentId || false, // ID de la société si c'est un représentant
+      
       x_studio_role: data.role,
+      x_studio_type: data.type,
       x_studio_budget_min: data.budgetMin,
       x_studio_budget_max: data.budgetMax,
       x_studio_localisation_prfre: data.preferredLocation,
       x_studio_source: data.source,
-      x_studio_type: data.type || 'private',
-      
-      // On force le statut client pour être propre dans Odoo
-      customer_rank: 1, 
+      customer_rank: 1,
     };
 
     let partnerId = data.id;
-
     if (partnerId) {
-      // --- UPDATE (WRITE) ---
-      // Signature Odoo: write([ids], {values})
-      // Avec ton helper odooCall qui prend 'args', on passe: [[id], values]
-      await odooCall('res.partner', 'write', [
-        [partnerId], 
-        odooPayload
-      ]);
-      
-      console.log(`Contact Odoo ${partnerId} mis à jour.`);
-
+      await odooCall('res.partner', 'write', [[partnerId], odooPayload]);
     } else {
-      // --- CREATE ---
-      // Signature Odoo: create([{values}])
-      // Avec ton helper: [[values]]
-      const result = await odooCall('res.partner', 'create', [
-        [odooPayload]
-      ]) as number; // Odoo retourne l'ID créé (int)
-      
-      partnerId = result;
-      console.log(`Nouveau contact Odoo créé avec ID: ${partnerId}`);
+      partnerId = await odooCall('res.partner', 'create', [odooPayload]);
     }
 
-    // On rafraîchit le cache Next.js si tu as une page qui liste les contacts
-    revalidatePath('/admin/contacts'); 
-    
+    revalidatePath('/dashboard/contacts');
     return { success: true, id: partnerId };
-
   } catch (error: any) {
-    console.error("Erreur lors de l'appel Odoo (upsertContact):", error);
-    
-    // On retourne un message d'erreur propre au front
-    return { 
-      success: false, 
-      error: error.message || "Une erreur est survenue lors de la communication avec Odoo." 
-    };
+    return { success: false, error: error.message };
   }
 }
 
@@ -105,61 +74,38 @@ export async function getContactById(id: number): Promise<REContact | null> {
   }
 }
 
-export async function getContacts(
-  page: number = 1, 
-  pageSize: number = 10, 
-  search: string = '', 
-  roleFilter: string = '',
-  typeFilter: string = '',
-) {
+export async function getContacts(page = 1, pageSize = 10, search = '', role = 'all', type = 'all', isCompany?: boolean) {
   const offset = (page - 1) * pageSize;
-  
-  // Construction du Domaine Odoo (Filtres)
-  const domain: any[] = [['customer_rank', '>', 0]]; // On ne veut que les clients
-  
-  if (search) {
-    domain.push('|', ['name', 'ilike', search], ['email', 'ilike', search]);
-  }
-  if (roleFilter && roleFilter !== 'all') {
-    domain.push(['x_studio_role', 'ilike', roleFilter]);
-  }
+  const domain: any[] = [['customer_rank', '>', 0]];
 
-  if (typeFilter && typeFilter !== 'all') {
-      domain.push(['x_studio_type', '=', typeFilter]);
-  }
+  if (search) domain.push('|', ['name', 'ilike', search], ['email', 'ilike', search]);
+  if (role !== 'all') domain.push(['x_studio_role', '=', role]);
+  if (type !== 'all') domain.push(['x_studio_type', '=', type]);
+  if (isCompany !== undefined) domain.push(['is_company', '=', isCompany]);
 
   try {
-    // 1. Compter le total pour la pagination
-    const totalCount = await odooCall('res.partner', 'search_count', [domain]) as number;
-
-    // 2. Récupérer les données
+    const totalCount = await odooCall('res.partner', 'search_count', [domain]);
     const records = await odooCall('res.partner', 'search_read', [
       domain,
-      ['id', 'name', 'email', 'phone', 'x_studio_role', 'create_date', 'x_studio_source', 'x_studio_type'],
-      offset, // Offset
-      pageSize, // Limit
-      'create_date desc' // Order
+      ['id', 'name', 'email', 'phone', 'x_studio_role', 'x_studio_type', 'is_company', 'parent_id', 'x_studio_source'],
+      offset, pageSize, 'create_date desc'
     ]) as any[];
 
-    // Mapping Odoo -> Frontend
-    const contacts: REContact[] = records.map((c: any) => ({
+    const contacts = records.map(c => ({
       id: c.id,
       name: c.name,
       email: c.email || '-',
       phone: c.phone || '-',
       role: c.x_studio_role || 'N/A',
-      source: c.x_studio_source,
-      budgetMin: 0, budgetMax: 0, preferredLocation: '', // Champs non affichés dans la liste
       type: c.x_studio_type || 'private',
-      createdAt: c.create_date || '',
+      isCompany: c.is_company,
+      parentId: c.parent_id ? c.parent_id[0] : null,
+      parentName: c.parent_id ? c.parent_id[1] : null,
+      source: c.x_studio_source,
     }));
 
-    return { contacts, totalCount, totalPages: Math.ceil(totalCount / pageSize) };
-
-  } catch (error) {
-    console.error("Error fetching contacts list:", error);
-    return { contacts: [], totalCount: 0, totalPages: 0 };
-  }
+    return { contacts, totalCount, totalPages: Math.ceil((totalCount as unknown as number) / pageSize) };
+  } catch (error) { return { contacts: [], totalCount: 0, totalPages: 0 }; }
 }
 
 export async function getContactHistory(partnerId: number) {
@@ -341,5 +287,26 @@ export async function getContactCounts() {
     return counts;
   } catch (error) {
     return { internal_agent: 0, internal_agency: 0, external_agent: 0, external_agency: 0, promoter: 0, private: 0, all: 0 };
+  }
+}
+
+export async function archiveContact(id: number) {
+  try {
+    // Dans Odoo, archiver = mettre le champ 'active' à false
+    await odooCall('res.partner', 'write', [
+      [id],
+      { active: false }
+    ]);
+
+    // On rafraîchit la page pour faire disparaître le contact de la liste
+    revalidatePath('/dashboard/contacts');
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Erreur archivage Odoo:", error);
+    return { 
+      success: false, 
+      error: error.message || "Impossible d'archiver ce contact pour le moment." 
+    };
   }
 }

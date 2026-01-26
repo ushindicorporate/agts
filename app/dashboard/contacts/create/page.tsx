@@ -1,19 +1,18 @@
-'use client'
-import ContactForm from '@/components/crm/ContactForm';
-import { useRouter } from 'next/navigation';
+// app/dashboard/contacts/create/page.tsx
+import { getContacts } from "@/lib/actions/crm-actions";
+import CreateContactClient from "./client";
 
-export default function CreateContactPage() {
-  const router = useRouter();
+export default async function CreateContactPage() {
+  // On récupère les deux types en parallèle pour alimenter les sélecteurs
+  const [companiesData, individualsData] = await Promise.all([
+    getContacts(1, 1000, "", "all", "all", true),  // Uniquement Sociétés
+    getContacts(1, 1000, "", "all", "all", false) // Uniquement Individus
+  ]);
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4">
-      <button 
-        onClick={() => router.back()} 
-        className="mb-4 text-sm text-gray-500 hover:text-gray-900"
-      >
-        ← Retour à la liste
-      </button>
-      <ContactForm onSuccess={() => router.push('/contacts')} />
-    </div>
+    <CreateContactClient 
+      companies={companiesData.contacts} 
+      individuals={individualsData.contacts} 
+    />
   );
 }
