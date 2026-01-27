@@ -65,13 +65,15 @@ export async function createTask(data: {
   summary: string;
   date_deadline: string;
   activity_type_id: number;
-  res_model: string; // 'res.partner' ou 'crm.lead'
+  res_model: string;
   res_id: number;
+  user_id?: number; // On le rend optionnel mais préférable
 }) {
   try {
+    // Si tu as récupéré l'odoo_partner_id dans la session Supabase, utilise-le
     await odooCall('mail.activity', 'create', [{
       ...data,
-      user_id: 2 // Remplace par l'ID de ton user Odoo (ou dynamique)
+      user_id: data.user_id || 2 // Fallback intelligent
     }]);
     revalidatePath('/dashboard/tasks');
     return { success: true };

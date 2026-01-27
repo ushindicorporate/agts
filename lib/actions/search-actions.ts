@@ -38,3 +38,14 @@ export async function globalSearch(query: string) {
     return { properties: [], vehicles: [], contacts: [] };
   }
 }
+
+export async function searchResources(model: string, query: string) {
+  try {
+    const records = await odooCall(model, 'search_read', [
+      [['name', 'ilike', query]],
+      ['id', 'name'],
+      0, 10
+    ]) as any[];
+    return records.map(r => ({ label: r.name, value: r.id.toString() }));
+  } catch (e) { return []; }
+}
